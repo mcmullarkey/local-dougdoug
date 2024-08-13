@@ -1,0 +1,20 @@
+[Start speaking]
+
+### Transcription 0 START | t0 = 0 ms | t1 = 3175 ms
+
+[00:00:00.000 --> 00:00:03.440]   This is me testing the text.
+
+### Transcription 0 END
+
+### Transcription 1 START | t0 = 0 ms | t1 = 6665 ms
+
+[00:00:00.000 --> 00:00:06.000]   This is me testing the text to speech or speech to text, I guess.
+
+### Transcription 1 END
+
+### Transcription 2 START | t0 = 0 ms | t1 = 8751 ms
+
+[00:00:00.000 --> 00:00:06.000]   This is me testing the text to speech or speech to text, I guess.
+[00:00:06.000 --> 00:00:08.000]   That's where it is.
+
+### Transcription 2 END
