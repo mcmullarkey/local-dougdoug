@@ -1,1 +1,1 @@
-# local-dougdoug
+# A Local AI Setup for Talking to Characters
