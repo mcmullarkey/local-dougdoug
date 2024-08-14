@@ -102,14 +102,9 @@ def send_to_ollama(prompt):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-    
 
 def play_audio():
-    pygame.mixer.init()
-    pygame.mixer.music.load('response.mp3')
-    pygame.mixer.music.play()
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
+    os.system("afplay response.mp3")  # Use afplay for macOS
 
 def respond_with_tts(response_text, image_path):
     print("Responding with TTS...")
@@ -119,12 +114,12 @@ def respond_with_tts(response_text, image_path):
     tts.save('response.mp3')
     
     pygame.init()
-    screen = pygame.display.set_mode((800, 800))
+    screen = pygame.display.set_mode((800, 800), pygame.NOFRAME | pygame.SRCALPHA)  # NOFRAME for borderless window
     image = pygame.image.load(image_path)
     image = pygame.transform.scale(image, (600, 600))
     
     angle = 0
-    direction = 1  # Direction of tilt
+    direction = 1
 
     audio_thread = threading.Thread(target=play_audio)
     audio_thread.start()
@@ -135,28 +130,26 @@ def respond_with_tts(response_text, image_path):
             if event.type == pygame.QUIT:
                 running = False
         
-        screen.fill((255, 255, 255))  # Clear screen with white background
+        screen.fill((0, 0, 0, 0))  # Fully transparent fill
         
-        # Rotate the image
         rotated_image = pygame.transform.rotate(image, angle)
-        rect = rotated_image.get_rect(center=(400, 400))  # Center the image in the larger window
+        rect = rotated_image.get_rect(center=(400, 400))
         
         screen.blit(rotated_image, rect.topleft)
         pygame.display.flip()
         
-        angle += direction  # Tilt the image
-        if angle > 10 or angle < -10:  # Limit the tilt angle to a small range
-            direction = -direction  # Reverse direction once the limit is reached
+        angle += direction
+        if angle > 7 or angle < -7:
+            direction = -direction
 
-        if not audio_thread.is_alive():  # Check if audio thread is still alive
+        if not audio_thread.is_alive():
             running = False
 
-        pygame.time.delay(30)  # Adjust delay for smooth animation
+        pygame.time.delay(30)
 
     audio_thread.join()
     pygame.quit()
     os.remove('response.mp3')
-
 
 
 if __name__ == "__main__":
