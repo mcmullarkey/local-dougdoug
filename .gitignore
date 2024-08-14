@@ -164,3 +164,4 @@ cython_debug/
 # For this project
 .bin
 .DS_Store
+detected_speech/
