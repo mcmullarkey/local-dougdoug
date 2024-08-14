@@ -2,13 +2,11 @@ import subprocess
 import datetime
 import threading
 import keyboard
-import re
 import glob
 import os
 from gtts import gTTS
 import json
 import pygame
-import math
 
 def main():
         
