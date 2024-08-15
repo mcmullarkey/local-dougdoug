@@ -42,7 +42,17 @@ def main():
         print(f"The response from Ollama is: {ollama_response['message']['content']}")
         
         respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png")
-    
+        
+        # Check if user wants to continue or quit after the response
+        print("Press 'c' to continue the conversation, or 'q' to quit.")
+        while True:
+            if keyboard.is_pressed('q'):
+                print("Conversation ended.")
+                return  # Exit the loop and the program
+            if keyboard.is_pressed('c'):
+                print("Continuing the conversation...")
+                break  # Continue with the outer loop
+
     return 0
 
 
@@ -162,6 +172,7 @@ def respond_with_tts(response_text, image_path):
         if angle > 7 or angle < -7:
             direction = -direction
 
+        # Exit the loop if the audio has finished playing
         if not audio_thread.is_alive():
             running = False
 
@@ -170,6 +181,10 @@ def respond_with_tts(response_text, image_path):
     audio_thread.join()
     pygame.quit()
     os.remove('response.mp3')
+
+    # Properly exit the Pygame event loop and window
+    pygame.display.quit()
+    pygame.quit()
 
 
 if __name__ == "__main__":
