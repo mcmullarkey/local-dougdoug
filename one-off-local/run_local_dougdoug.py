@@ -9,22 +9,42 @@ import json
 import pygame
 
 def main():
-        
     os.makedirs('detected_speech', exist_ok=True)
     
-    run_speech_detection()
-    
-    prompt_text = parse_speech("detected_speech/")
-    
-    print(f"The detected prompt text is: {prompt_text}")
-    
-    ollama_response = send_to_ollama(prompt_text)
-    
-    print(f"The response from Ollama is: {ollama_response["message"]["content"]}")
-    
-    respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png")
+    while True:
+        print("Press 's' to start speech detection or 'q' to exit the conversation.")
+        
+        while True:
+            if keyboard.is_pressed('q'):
+                print("Exiting the program.")
+                return  # Exit the function to break the loop
+            
+            if keyboard.is_pressed('s'):
+                print("Start speaking when prompted, press Esc when done speaking")
+                break  # Break the inner loop to start detection
+        
+        run_speech_detection()
+        
+        prompt_text = parse_speech("detected_speech/")
+        
+        if prompt_text.lower() in ["exit", "quit", "stop"]:
+            print("Conversation ended.")
+            break
+        
+        print(f"The detected prompt text is: {prompt_text}")
+        
+        ollama_response = send_to_ollama(prompt_text)
+        
+        if ollama_response is None:
+            print("Failed to get a response from Ollama. Exiting.")
+            break
+        
+        print(f"The response from Ollama is: {ollama_response['message']['content']}")
+        
+        respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png")
     
     return 0
+
 
 def run_speech_detection():
     process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
