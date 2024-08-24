@@ -165,4 +165,6 @@ cython_debug/
 .bin
 .DS_Store
 one-off-local/detected_speech/*
-.mp3
+*.mp3
+*.wav
+*.m4a

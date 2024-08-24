@@ -7,6 +7,10 @@ import os
 from gtts import gTTS
 import json
 import pygame
+from multiprocessing import Process
+import torch
+from TTS.api import TTS
+import simpleaudio as sa
 
 def main():
     os.makedirs('detected_speech', exist_ok=True)
@@ -98,6 +102,10 @@ def parse_speech(directory_path):
 
 def send_to_ollama(prompt):
     print("Sending to Ollama...")
+    
+    # TODO Append response from model to subsequent prompts to Ollama 
+    # to enable actual conversation
+    
     try:
         response = subprocess.run(
             [
@@ -133,26 +141,14 @@ def send_to_ollama(prompt):
         print(f"An error occurred: {e}")
         return None
 
-def play_audio():
-    os.system("afplay response.mp3")  # Use afplay for macOS
-
-def respond_with_tts(response_text, image_path):
-    print("Responding with TTS...")
-    os.system("killall afplay")
-    
-    tts = gTTS(response_text["message"]["content"])
-    tts.save('response.mp3')
-    
+def character_animation(image_path):
     pygame.init()
-    screen = pygame.display.set_mode((800, 800), pygame.NOFRAME | pygame.SRCALPHA)  # NOFRAME for borderless window
+    screen = pygame.display.set_mode((800, 800), pygame.NOFRAME | pygame.SRCALPHA)
     image = pygame.image.load(image_path)
     image = pygame.transform.scale(image, (600, 600))
     
     angle = 0
     direction = 1
-
-    audio_thread = threading.Thread(target=play_audio)
-    audio_thread.start()
 
     running = True
     while running:
@@ -172,19 +168,59 @@ def respond_with_tts(response_text, image_path):
         if angle > 7 or angle < -7:
             direction = -direction
 
-        # Exit the loop if the audio has finished playing
-        if not audio_thread.is_alive():
-            running = False
-
         pygame.time.delay(30)
-
-    audio_thread.join()
-    pygame.quit()
-    os.remove('response.mp3')
-
-    # Properly exit the Pygame event loop and window
+    
     pygame.display.quit()
     pygame.quit()
+
+
+def play_audio():
+    # os.system("afplay response.mp3")  # Use afplay for macOS
+    
+    # Play the output.wav file
+    wave_obj = sa.WaveObject.from_wave_file("output.wav")
+    play_obj = wave_obj.play()
+    play_obj.wait_done()  # Wait until sound has finished playing
+    
+
+def respond_with_tts(response_text, image_path):
+    
+    #TODO Enable more advanced TTS with Coqui https://docs.coqui.ai/en/latest/models/xtts.html
+    
+    print("Responding with TTS...")
+    os.system("killall afplay")
+    
+    # Get device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Init TTS
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+
+    # Run TTS
+    tts.tts_to_file(text=response_text["message"]["content"], speaker_wav="pajama_sam_test_reduced.wav", language="en", file_path="output.wav")
+    
+    # tts = gTTS(response_text["message"]["content"])
+    # tts.save('response.mp3')
+    
+    # Start Pygame in a separate process
+    pygame_process = Process(target=character_animation, args=(image_path,))
+    pygame_process.start()
+
+    # Start the audio playback in a separate thread
+    audio_thread = threading.Thread(target=play_audio)
+    audio_thread.start()
+
+    # Wait for the audio to finish
+    audio_thread.join()
+
+    # Once audio is done, terminate the Pygame process
+    pygame_process.terminate()
+    pygame_process.join()
+    
+    # os.remove('response.mp3')
+    os.remove('output.wav')
+
+    print("Pygame window should now be closed.")
 
 
 if __name__ == "__main__":
