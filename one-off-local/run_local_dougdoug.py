@@ -15,6 +15,14 @@ import simpleaudio as sa
 def main():
     os.makedirs('detected_speech', exist_ok=True)
     
+    print("Loading models...")
+    
+    # Get device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Init TTS
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+    
     while True:
         print("Press 's' to start speech detection or 'q' to exit the conversation.")
         
@@ -37,15 +45,16 @@ def main():
         
         print(f"The detected prompt text is: {prompt_text}")
         
-        ollama_response = send_to_ollama(prompt_text)
+        send_to_ollama(prompt_text, tts, "pajama_sam/images/Pajama_Sam.png")
         
-        if ollama_response is None:
-            print("Failed to get a response from Ollama. Exiting.")
-            break
+        # if ollama_response is None:
+        #     print("Failed to get a response from Ollama. Exiting.")
+        #     break
         
-        print(f"The response from Ollama is: {ollama_response['message']['content']}")
+        # print(f"The response from Ollama is: {ollama_response['message']['content']}")
         
-        respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png")
+        # respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png",
+        #                  tts)
         
         # Check if user wants to continue or quit after the response
         print("Press 'c' to continue the conversation, or 'q' to quit.")
@@ -100,14 +109,11 @@ def parse_speech(directory_path):
             return cleaned_line
 
 
-def send_to_ollama(prompt):
+def send_to_ollama(prompt, tts_model, image_path):
     print("Sending to Ollama...")
-    
-    # TODO Append response from model to subsequent prompts to Ollama 
-    # to enable actual conversation
-    
+
     try:
-        response = subprocess.run(
+        response = subprocess.Popen(
             [
                 "curl", "-X", "POST", "http://localhost:11434/api/chat",
                 "-H", "Content-Type: application/json",
@@ -123,23 +129,34 @@ def send_to_ollama(prompt):
                             }}
                         }}
                     ],
-                    "stream": false
+                    "stream": true
                 }}'''
             ],
-            capture_output=True, text=True
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
-        
-        # Check if the subprocess call was successful
-        if response.returncode == 0:
-            # Attempt to parse the response as JSON
-            result = json.loads(response.stdout)
-            return result
-        else:
-            print("Error:", response.stderr)
+
+        for line in response.stdout:
+            try:
+                if line.strip():
+                    result = json.loads(line)
+                    print(result)
+                    content = result.get('content', '')
+                    if content:
+                        print(f"Messsage exists and is: {content}")
+                        # Pass the content to the TTS and animation function
+                        respond_with_tts({"message": {"content": content}}, image_path, tts_model)
+            except json.JSONDecodeError:
+                print("Failed to decode JSON:", line)
+
+        response.wait()
+        if response.returncode != 0:
+            print("Error:", response.stderr.read())
             return None
+
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
 
 def character_animation(image_path):
     pygame.init()
@@ -177,27 +194,23 @@ def character_animation(image_path):
 def play_audio():
     # os.system("afplay response.mp3")  # Use afplay for macOS
     
-    # Play the output.wav file
+    # Play the output.wav file TODO Need to check and play different files vs. just output.wav
     wave_obj = sa.WaveObject.from_wave_file("output.wav")
     play_obj = wave_obj.play()
     play_obj.wait_done()  # Wait until sound has finished playing
     
 
-def respond_with_tts(response_text, image_path):
+def respond_with_tts(response_text, image_path,
+                     tts_model):
     
     #TODO Enable more advanced TTS with Coqui https://docs.coqui.ai/en/latest/models/xtts.html
     
     print("Responding with TTS...")
     os.system("killall afplay")
-    
-    # Get device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Init TTS
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
-
-    # Run TTS
-    tts.tts_to_file(text=response_text["message"]["content"], speaker_wav="pajama_sam_test_reduced.wav", language="en", file_path="output.wav")
+    # Run TTS TODO Probably need to figure out ways to systamtically name .wav chunks so they can be played or find another way to play the files
+    tts_model.tts_to_file(text=response_text["message"]["content"], speaker_wav="pajama_sam_test_reduced.wav", language="en", file_path=f"output.wav",
+                          split_sentences=True)
     
     # tts = gTTS(response_text["message"]["content"])
     # tts.save('response.mp3')
@@ -218,7 +231,7 @@ def respond_with_tts(response_text, image_path):
     pygame_process.join()
     
     # os.remove('response.mp3')
-    os.remove('output.wav')
+    # os.remove('output.wav')
 
     print("Pygame window should now be closed.")
 

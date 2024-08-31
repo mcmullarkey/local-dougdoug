@@ -168,3 +168,5 @@ one-off-local/detected_speech/*
 *.mp3
 *.wav
 *.m4a
+*.onnx
+*.onnx.json
