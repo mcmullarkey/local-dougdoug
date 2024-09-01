@@ -8,6 +8,7 @@ import json
 import pygame
 from multiprocessing import Process, Event
 import re
+import sys
 
 conversation_history = []
 
@@ -39,7 +40,7 @@ def main():
         # Append user's prompt to the conversation history
         conversation_history.append({"role": "user", "content": prompt_text})
         
-        send_to_ollama(prompt_text, "pajama_sam/images/Pajama_Sam.png")
+        send_to_ollama(prompt_text, sys.argv[2])
         
         print("Press 'c' to continue the conversation, or 'q' to quit.")
         while True:
@@ -98,7 +99,7 @@ def send_to_ollama(prompt, image_path):
                 "curl", "-X", "POST", "http://localhost:11434/api/chat",
                 "-H", "Content-Type: application/json",
                 "-d", json.dumps({
-                    "model": "pajama_sam",
+                    "model": sys.argv[1],
                     "messages": conversation_history,
                     "stream": True
                 })
@@ -198,7 +199,7 @@ def respond_with_tts(response_text, image_path):
     response = escape_and_replace(response_text['message']['content'])
     tts_command = (
         f"echo '{response}' | "
-        "piper --model en_US-lessac-medium --output-raw | "
+        f"piper --model {sys.argv[3]} --output-raw | "
         "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
     )
 
