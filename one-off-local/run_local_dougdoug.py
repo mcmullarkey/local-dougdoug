@@ -4,24 +4,12 @@ import threading
 import keyboard
 import glob
 import os
-from gtts import gTTS
 import json
 import pygame
 from multiprocessing import Process
-import torch
-from TTS.api import TTS
-import simpleaudio as sa
 
 def main():
     os.makedirs('detected_speech', exist_ok=True)
-    
-    print("Loading models...")
-    
-    # Get device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Init TTS
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
     
     while True:
         print("Press 's' to start speech detection or 'q' to exit the conversation.")
@@ -45,7 +33,7 @@ def main():
         
         print(f"The detected prompt text is: {prompt_text}")
         
-        send_to_ollama(prompt_text, tts, "pajama_sam/images/Pajama_Sam.png")
+        send_to_ollama(prompt_text, "pajama_sam/images/Pajama_Sam.png")
         
         # if ollama_response is None:
         #     print("Failed to get a response from Ollama. Exiting.")
@@ -109,7 +97,7 @@ def parse_speech(directory_path):
             return cleaned_line
 
 
-def send_to_ollama(prompt, tts_model, image_path):
+def send_to_ollama(prompt, image_path):
     print("Sending to Ollama...")
 
     try:
@@ -139,14 +127,14 @@ def send_to_ollama(prompt, tts_model, image_path):
             try:
                 if line.strip():
                     result = json.loads(line)
-                    print(result)
-                    content = result.get('content', '')
+                    content = result.get('message', {}).get('content', '')
                     if content:
-                        print(f"Messsage exists and is: {content}")
+                        print(f"Message exists and is: {content}")
                         # Pass the content to the TTS and animation function
-                        respond_with_tts({"message": {"content": content}}, image_path, tts_model)
+                        respond_with_tts({"message": {"content": content}}, image_path)
             except json.JSONDecodeError:
                 print("Failed to decode JSON:", line)
+
 
         response.wait()
         if response.returncode != 0:
@@ -200,38 +188,30 @@ def play_audio():
     play_obj.wait_done()  # Wait until sound has finished playing
     
 
-def respond_with_tts(response_text, image_path,
-                     tts_model):
-    
-    #TODO Enable more advanced TTS with Coqui https://docs.coqui.ai/en/latest/models/xtts.html
-    
+def respond_with_tts(response_text, image_path):
     print("Responding with TTS...")
     os.system("killall afplay")
 
-    # Run TTS TODO Probably need to figure out ways to systamtically name .wav chunks so they can be played or find another way to play the files
-    tts_model.tts_to_file(text=response_text["message"]["content"], speaker_wav="pajama_sam_test_reduced.wav", language="en", file_path=f"output.wav",
-                          split_sentences=True)
+    # Activate the virtual environment
+    tts_command = (
+        # f"pyenv activate local-douddoug && "
+        f"echo '{response_text['message']['content']}' | "
+        "piper --model en_US-lessac-medium --output-raw | "
+        "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
+    )
     
-    # tts = gTTS(response_text["message"]["content"])
-    # tts.save('response.mp3')
-    
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
+    env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
+
+    subprocess.run(tts_command, shell=True, env=env)
+
     # Start Pygame in a separate process
     pygame_process = Process(target=character_animation, args=(image_path,))
     pygame_process.start()
 
-    # Start the audio playback in a separate thread
-    audio_thread = threading.Thread(target=play_audio)
-    audio_thread.start()
-
-    # Wait for the audio to finish
-    audio_thread.join()
-
-    # Once audio is done, terminate the Pygame process
-    pygame_process.terminate()
+    # Wait for the audio playback to finish
     pygame_process.join()
-    
-    # os.remove('response.mp3')
-    # os.remove('output.wav')
 
     print("Pygame window should now be closed.")
 
