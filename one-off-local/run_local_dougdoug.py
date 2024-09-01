@@ -6,7 +6,8 @@ import glob
 import os
 import json
 import pygame
-from multiprocessing import Process
+from multiprocessing import Process, Event
+import re
 
 def main():
     os.makedirs('detected_speech', exist_ok=True)
@@ -35,16 +36,6 @@ def main():
         
         send_to_ollama(prompt_text, "pajama_sam/images/Pajama_Sam.png")
         
-        # if ollama_response is None:
-        #     print("Failed to get a response from Ollama. Exiting.")
-        #     break
-        
-        # print(f"The response from Ollama is: {ollama_response['message']['content']}")
-        
-        # respond_with_tts(ollama_response, "pajama_sam/images/Pajama_Sam.png",
-        #                  tts)
-        
-        # Check if user wants to continue or quit after the response
         print("Press 'c' to continue the conversation, or 'q' to quit.")
         while True:
             if keyboard.is_pressed('q'):
@@ -123,17 +114,30 @@ def send_to_ollama(prompt, image_path):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
+        buffer = ""
+
         for line in response.stdout:
             try:
                 if line.strip():
                     result = json.loads(line)
                     content = result.get('message', {}).get('content', '')
                     if content:
-                        print(f"Message exists and is: {content}")
-                        # Pass the content to the TTS and animation function
-                        respond_with_tts({"message": {"content": content}}, image_path)
+                        buffer += content
+                        # Check for any sentence-ending punctuation
+                        if re.search(r'[.!?]', buffer):
+                            # Split at the first occurrence of any of these punctuation marks
+                            match = re.search(r'[.!?]', buffer)
+                            if match:
+                                end_idx = match.end()
+                                sentence = buffer[:end_idx]
+                                buffer = buffer[end_idx:].lstrip()  # Keep the remaining content in the buffer
+                                print(f"Message exists and is: {sentence}")
+                                # Pass the sentence to the TTS and animation function
+                                respond_with_tts({"message": {"content": sentence}}, image_path)
             except json.JSONDecodeError:
                 print("Failed to decode JSON:", line)
+
+
 
 
         response.wait()
@@ -146,7 +150,7 @@ def send_to_ollama(prompt, image_path):
         return None
 
 
-def character_animation(image_path):
+def character_animation(image_path, tts_done_event):
     pygame.init()
     screen = pygame.display.set_mode((800, 800), pygame.NOFRAME | pygame.SRCALPHA)
     image = pygame.image.load(image_path)
@@ -174,19 +178,19 @@ def character_animation(image_path):
             direction = -direction
 
         pygame.time.delay(30)
+        
+        if tts_done_event.is_set():
+            running = False  # Stop the animation when TTS is done
     
     pygame.display.quit()
     pygame.quit()
 
+ 
+# Function to run the TTS command
+def run_tts(tts_command, env, tts_done_event):
+        subprocess.run(tts_command, shell=True, env=env)
+        tts_done_event.set()  # Signal that TTS is done
 
-def play_audio():
-    # os.system("afplay response.mp3")  # Use afplay for macOS
-    
-    # Play the output.wav file TODO Need to check and play different files vs. just output.wav
-    wave_obj = sa.WaveObject.from_wave_file("output.wav")
-    play_obj = wave_obj.play()
-    play_obj.wait_done()  # Wait until sound has finished playing
-    
 
 def respond_with_tts(response_text, image_path):
     print("Responding with TTS...")
@@ -194,26 +198,32 @@ def respond_with_tts(response_text, image_path):
 
     # Activate the virtual environment
     tts_command = (
-        # f"pyenv activate local-douddoug && "
         f"echo '{response_text['message']['content']}' | "
         "piper --model en_US-lessac-medium --output-raw | "
         "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
     )
-    
+
+    # Set up environment for TTS command
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
     env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
 
-    subprocess.run(tts_command, shell=True, env=env)
+    # Create an event to signal when TTS is done
+    tts_done_event = Event()
 
-    # Start Pygame in a separate process
-    pygame_process = Process(target=character_animation, args=(image_path,))
+    # Start TTS in a separate process
+    tts_process = Process(target=run_tts, args=(tts_command, env, tts_done_event))
+    tts_process.start()
+
+    # Start Pygame animation in a separate process
+    pygame_process = Process(target=character_animation, args=(image_path, tts_done_event))
     pygame_process.start()
 
-    # Wait for the audio playback to finish
+    # Wait for both processes to finish
+    tts_process.join()
     pygame_process.join()
 
-    print("Pygame window should now be closed.")
+    print("TTS and animation processes should now be complete.")
 
 
 if __name__ == "__main__":
