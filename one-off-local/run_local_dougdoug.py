@@ -13,6 +13,8 @@ import sys
 conversation_history = []
 
 def main():
+    # TODO Hard code first response from Enigma?
+    
     os.makedirs('detected_speech', exist_ok=True)
     
     while True:
