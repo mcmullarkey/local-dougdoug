@@ -9,6 +9,8 @@ import pygame
 from multiprocessing import Process, Event
 import re
 
+conversation_history = []
+
 def main():
     os.makedirs('detected_speech', exist_ok=True)
     
@@ -18,11 +20,11 @@ def main():
         while True:
             if keyboard.is_pressed('q'):
                 print("Exiting the program.")
-                return  # Exit the function to break the loop
+                return
             
             if keyboard.is_pressed('s'):
                 print("Start speaking when prompted, press Esc when done speaking")
-                break  # Break the inner loop to start detection
+                break
         
         run_speech_detection()
         
@@ -34,16 +36,19 @@ def main():
         
         print(f"The detected prompt text is: {prompt_text}")
         
+        # Append user's prompt to the conversation history
+        conversation_history.append({"role": "user", "content": prompt_text})
+        
         send_to_ollama(prompt_text, "pajama_sam/images/Pajama_Sam.png")
         
         print("Press 'c' to continue the conversation, or 'q' to quit.")
         while True:
             if keyboard.is_pressed('q'):
                 print("Conversation ended.")
-                return  # Exit the loop and the program
+                return
             if keyboard.is_pressed('c'):
                 print("Continuing the conversation...")
-                break  # Continue with the outer loop
+                break
 
     return 0
 
@@ -69,12 +74,8 @@ def run_speech_detection():
 def parse_speech(directory_path):
     print("Parsing speech...")
     
-    # Get most recently created .txt file
-    
     files = glob.glob(os.path.join(directory_path, '*.txt'))
-    file_path =  max(files, key=os.path.getctime) if files else None
-    
-    # Get last Transcription block from that file
+    file_path = max(files, key=os.path.getctime) if files else None
     
     with open(file_path, 'r') as f:
         lines = f.readlines()
@@ -96,25 +97,17 @@ def send_to_ollama(prompt, image_path):
             [
                 "curl", "-X", "POST", "http://localhost:11434/api/chat",
                 "-H", "Content-Type: application/json",
-                "-d", f'''{{
+                "-d", json.dumps({
                     "model": "pajama_sam",
-                    "messages": [
-                        {{
-                            "role": "user",
-                            "content": "{prompt}",
-                            "options": {{
-                                "num_predict": 42,
-                                "num_ctx": 4096
-                            }}
-                        }}
-                    ],
-                    "stream": true
-                }}'''
+                    "messages": conversation_history,
+                    "stream": True
+                })
             ],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         buffer = ""
+        full_response = ""
 
         for line in response.stdout:
             try:
@@ -123,27 +116,29 @@ def send_to_ollama(prompt, image_path):
                     content = result.get('message', {}).get('content', '')
                     if content:
                         buffer += content
-                        # Check for any sentence-ending punctuation
-                        if re.search(r'[.!?]', buffer):
-                            # Split at the first occurrence of any of these punctuation marks
+                        full_response += content  # Collect the full response
+                        while re.search(r'[.!?]', buffer):  # Process all complete sentences
                             match = re.search(r'[.!?]', buffer)
-                            if match:
-                                end_idx = match.end()
-                                sentence = buffer[:end_idx]
-                                buffer = buffer[end_idx:].lstrip()  # Keep the remaining content in the buffer
-                                print(f"Message exists and is: {sentence}")
-                                # Pass the sentence to the TTS and animation function
-                                respond_with_tts({"message": {"content": sentence}}, image_path)
+                            end_idx = match.end()
+                            sentence = buffer[:end_idx]
+                            buffer = buffer[end_idx:].lstrip()
+                            print(f"Message exists and is: {sentence}")
+                            respond_with_tts({"message": {"content": sentence}}, image_path)
             except json.JSONDecodeError:
                 print("Failed to decode JSON:", line)
-
-
-
+            except Exception as e:
+                print(f"An error occurred while processing the line: {e}")
 
         response.wait()
         if response.returncode != 0:
             print("Error:", response.stderr.read())
             return None
+        
+        # After streaming, add the entire response to the conversation history
+        if full_response:
+            conversation_history.append({"role": "assistant", "content": full_response})
+        
+        print(f"The full conversation history is: {conversation_history}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -165,7 +160,7 @@ def character_animation(image_path, tts_done_event):
             if event.type == pygame.QUIT:
                 running = False
         
-        screen.fill((0, 0, 0, 0))  # Fully transparent fill
+        screen.fill((0, 0, 0, 0))
         
         rotated_image = pygame.transform.rotate(image, angle)
         rect = rotated_image.get_rect(center=(400, 400))
@@ -180,46 +175,45 @@ def character_animation(image_path, tts_done_event):
         pygame.time.delay(30)
         
         if tts_done_event.is_set():
-            running = False  # Stop the animation when TTS is done
+            running = False
     
     pygame.display.quit()
     pygame.quit()
 
- 
-# Function to run the TTS command
+
 def run_tts(tts_command, env, tts_done_event):
-        subprocess.run(tts_command, shell=True, env=env)
-        tts_done_event.set()  # Signal that TTS is done
+    subprocess.run(tts_command, shell=True, env=env)
+    tts_done_event.set()
+
+
+def escape_and_replace(text):
+    # Escape single quotes and replace newlines with spaces
+    return text.replace("'", "'\\''").replace('\n', ' ')
 
 
 def respond_with_tts(response_text, image_path):
     print("Responding with TTS...")
     os.system("killall afplay")
 
-    # Activate the virtual environment
+    response = escape_and_replace(response_text['message']['content'])
     tts_command = (
-        f"echo '{response_text['message']['content']}' | "
+        f"echo '{response}' | "
         "piper --model en_US-lessac-medium --output-raw | "
         "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
     )
 
-    # Set up environment for TTS command
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
     env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
 
-    # Create an event to signal when TTS is done
     tts_done_event = Event()
 
-    # Start TTS in a separate process
     tts_process = Process(target=run_tts, args=(tts_command, env, tts_done_event))
     tts_process.start()
 
-    # Start Pygame animation in a separate process
     pygame_process = Process(target=character_animation, args=(image_path, tts_done_event))
     pygame_process.start()
 
-    # Wait for both processes to finish
     tts_process.join()
     pygame_process.join()
 
@@ -228,4 +222,5 @@ def respond_with_tts(response_text, image_path):
 
 if __name__ == "__main__":
     main()
+
 
