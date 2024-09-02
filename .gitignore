@@ -164,7 +164,7 @@ cython_debug/
 # For this project
 .bin
 .DS_Store
-one-off-local/detected_speech/*
+cli/detected_speech/*
 *.mp3
 *.wav
 *.m4a
