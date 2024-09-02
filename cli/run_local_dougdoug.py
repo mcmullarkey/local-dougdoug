@@ -121,12 +121,17 @@ def send_to_ollama(prompt, image_path):
                         buffer += content
                         full_response += content  # Collect the full response
                         while re.search(r'[.!?]', buffer):  # Process all complete sentences
-                            match = re.search(r'[.!?]', buffer)
-                            end_idx = match.end()
-                            sentence = buffer[:end_idx]
-                            buffer = buffer[end_idx:].lstrip()
-                            print(f"Message exists and is: {sentence}")
-                            respond_with_tts({"message": {"content": sentence}}, image_path)
+                            match = re.search(r'[.!?]+', buffer)
+                            if match:
+                                end_idx = match.end()
+                                sentence = buffer[:end_idx]
+                                buffer = buffer[end_idx:].lstrip()
+                                # Check if the sentence is more than just punctuation
+                                if re.search(r'\w', sentence):
+                                    print(f"Message exists and is: {sentence}")
+                                    respond_with_tts({"message": {"content": sentence}}, image_path)
+                                else:
+                                    print("Ignoring standalone punctuation")
             except json.JSONDecodeError:
                 print("Failed to decode JSON:", line)
             except Exception as e:
