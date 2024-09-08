@@ -9,6 +9,7 @@ import pygame
 from multiprocessing import Process, Event
 import re
 import sys
+from fuzzywuzzy import fuzz
 
 conversation_history = []
 
@@ -50,11 +51,11 @@ def main():
         
         run_speech_detection()
         
-        prompt_text = parse_speech("detected_speech/")
+        prompt_text = parse_speech("detected_speech/", 50)
         
-        if prompt_text.lower() in ["exit", "quit", "stop"]:
-            print("Conversation ended.")
-            break
+        # if prompt_text.lower() in ["exit", "quit", "stop"]:
+        #     print("Conversation ended.")
+        #     break
         
         print(f"The detected prompt text is: {prompt_text}")
         
@@ -93,7 +94,7 @@ def run_speech_detection():
     listener_thread.join() 
 
 
-def parse_speech(directory_path):
+def parse_speech(directory_path, similarity_threshold):
     print("Parsing speech...")
     
     files = glob.glob(os.path.join(directory_path, '*.txt'))
@@ -103,12 +104,45 @@ def parse_speech(directory_path):
         lines = f.readlines()
     
     capture = False
+    speech_lines = []
+    last_cleaned_line = ""
+
     for line in lines:
-        cleaned_line = line.strip().replace('[2K', '').strip()
+        cleaned_line = line.strip()
+
         if "[Start speaking]" in line:
             capture = True
-        elif capture and cleaned_line:
-            return cleaned_line
+        elif capture:
+            if cleaned_line.startswith("whisper_print_timings"):
+                break
+            
+            if cleaned_line:
+                cleaned_line = re.sub(r'\[\d+[A-Z]*', '', cleaned_line)
+                cleaned_line = re.sub(r'[^\x20-\x7E]+', '', cleaned_line)
+
+                if cleaned_line:  # Ensure that cleaned_line is not empty
+                    if last_cleaned_line:
+                        similarity = fuzz.ratio(last_cleaned_line, cleaned_line)
+                        print(f"Comparing:\nLast: {last_cleaned_line}\nCurrent: {cleaned_line}\nSimilarity: {similarity}")
+                        
+                        if similarity >= similarity_threshold:
+                            print(f"Similar (>= {similarity_threshold}): Replacing last entry.")
+                            speech_lines[-1] = cleaned_line
+                        else:
+                            print(f"Not Similar (< {similarity_threshold}): Appending new entry.")
+                            speech_lines.append(cleaned_line)
+                    else:
+                        speech_lines.append(cleaned_line)
+
+                    last_cleaned_line = cleaned_line
+
+    result = ' '.join(speech_lines).strip()
+    result = re.sub(r'\s+', ' ', result)
+
+    return result
+
+
+
 
 
 def send_to_ollama(ollama_model, image_path, voice):
