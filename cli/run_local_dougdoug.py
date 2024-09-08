@@ -13,9 +13,28 @@ import sys
 conversation_history = []
 
 def main():
-    # TODO Hard code first response from Enigma?
+    
+    if sys.argv[1] == "spy_fox":
+        ollama_model = "spy_fox"
+        character_image = "spy_fox/images/spy_fox.png"
+        voice = "en_US-lessac-medium.onnx"
+        
+    if sys.argv[1] == "fortune_teller":
+        ollama_model = "fortune_teller"
+        character_image = "fortune_teller/images/fortune_teller.png"
+        voice = "en_GB-aru-medium.onnx"
+    
+    if sys.argv[1] == "pajama_sam":
+        ollama_model = "pajama_sam"
+        character_image = "pajama_sam/images/Pajama_Sam.png"
+        voice = "en_US-lessac-medium.onnx"
+    
+    #TODO Set all parameters based on one command line argument instead of having to pass
+    # all of them explicitly?
     
     os.makedirs('detected_speech', exist_ok=True)
+    
+    # TODO Hard code first response from Enigma?
     
     while True:
         print("Press 's' to start speech detection or 'q' to exit the conversation.")
@@ -42,7 +61,7 @@ def main():
         # Append user's prompt to the conversation history
         conversation_history.append({"role": "user", "content": prompt_text})
         
-        send_to_ollama(prompt_text, sys.argv[2])
+        send_to_ollama(ollama_model, character_image, voice)
         
         print("Press 'c' to continue the conversation, or 'q' to quit.")
         while True:
@@ -92,7 +111,7 @@ def parse_speech(directory_path):
             return cleaned_line
 
 
-def send_to_ollama(prompt, image_path):
+def send_to_ollama(ollama_model, image_path, voice):
     print("Sending to Ollama...")
 
     try:
@@ -101,7 +120,7 @@ def send_to_ollama(prompt, image_path):
                 "curl", "-X", "POST", "http://localhost:11434/api/chat",
                 "-H", "Content-Type: application/json",
                 "-d", json.dumps({
-                    "model": sys.argv[1],
+                    "model": ollama_model,
                     "messages": conversation_history,
                     "stream": True
                 })
@@ -129,7 +148,7 @@ def send_to_ollama(prompt, image_path):
                                 # Check if the sentence is more than just punctuation
                                 if re.search(r'\w', sentence):
                                     print(f"Message exists and is: {sentence}")
-                                    respond_with_tts({"message": {"content": sentence}}, image_path)
+                                    respond_with_tts({"message": {"content": sentence}}, image_path, voice)
                                 else:
                                     print("Ignoring standalone punctuation")
             except json.JSONDecodeError:
@@ -199,14 +218,14 @@ def escape_and_replace(text):
     return text.replace("'", "'\\''").replace('\n', ' ')
 
 
-def respond_with_tts(response_text, image_path):
+def respond_with_tts(response_text, image_path, voice_type):
     print("Responding with TTS...")
     os.system("killall afplay")
 
     response = escape_and_replace(response_text['message']['content'])
     tts_command = (
         f"echo '{response}' | "
-        f"piper --model {sys.argv[3]} --output-raw | "
+        f"piper --model {voice_type} --output-raw | "
         "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
     )
 
