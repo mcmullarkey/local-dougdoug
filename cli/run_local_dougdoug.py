@@ -142,9 +142,6 @@ def parse_speech(directory_path, similarity_threshold):
     return result
 
 
-
-
-
 def send_to_ollama(ollama_model, image_path, voice):
     print("Sending to Ollama...")
 
@@ -156,7 +153,8 @@ def send_to_ollama(ollama_model, image_path, voice):
                 "-d", json.dumps({
                     "model": ollama_model,
                     "messages": conversation_history,
-                    "stream": True
+                    "stream": True,
+                    "options": {"keep_alive": "15m"}
                 })
             ],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -164,6 +162,7 @@ def send_to_ollama(ollama_model, image_path, voice):
 
         buffer = ""
         full_response = ""
+        sentence_queue = []  # Store complete sentences
 
         for line in response.stdout:
             try:
@@ -173,37 +172,43 @@ def send_to_ollama(ollama_model, image_path, voice):
                     if content:
                         buffer += content
                         full_response += content  # Collect the full response
-                        while re.search(r'[.!?]', buffer):  # Process all complete sentences
-                            match = re.search(r'[.!?]+', buffer)
+
+                        # While tqhere are full sentences, extract and queue them
+                        while re.search(r'[.!?;]', buffer):
+                            match = re.search(r'[.!?;q]+', buffer)
                             if match:
                                 end_idx = match.end()
                                 sentence = buffer[:end_idx]
-                                buffer = buffer[end_idx:].lstrip()
-                                # Check if the sentence is more than just punctuation
-                                if re.search(r'\w', sentence):
-                                    print(f"Message exists and is: {sentence}")
-                                    respond_with_tts({"message": {"content": sentence}}, image_path, voice)
-                                else:
-                                    print("Ignoring standalone punctuation")
+                                buffer = buffer[end_idx:].lstrip()  # Remove processed part
+                                if re.search(r'\w', sentence):  # Ensure it's a valid sentence
+                                    sentence_queue.append(sentence)
+
             except json.JSONDecodeError:
                 print("Failed to decode JSON:", line)
             except Exception as e:
                 print(f"An error occurred while processing the line: {e}")
 
         response.wait()
+
         if response.returncode != 0:
             print("Error:", response.stderr.read())
             return None
-        
-        # After streaming, add the entire response to the conversation history
+
+        # Process all queued complete sentences via TTS
+        for sentence in sentence_queue:
+            print(f"Reading sentence: {sentence}")
+            respond_with_tts({"message": {"content": sentence}}, image_path, voice)
+
+        # Add the entire response to the conversation history
         if full_response:
             conversation_history.append({"role": "assistant", "content": full_response})
-        
+
         print(f"The full conversation history is: {conversation_history}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
 
 
 def character_animation(image_path, tts_done_event):
