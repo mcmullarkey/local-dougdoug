@@ -170,3 +170,4 @@ cli/detected_speech/*
 *.m4a
 *.onnx
 *.onnx.json
+*.zip
