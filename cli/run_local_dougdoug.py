@@ -18,7 +18,7 @@ def main():
     if sys.argv[1] == "spy_fox":
         ollama_model = "spy_fox"
         character_image = "spy_fox/images/spy_fox.png"
-        voice = "en_US-lessac-medium.onnx"
+        voice = "en_US-spy-foxq-medium.onnx"
         
     if sys.argv[1] == "fortune_teller":
         ollama_model = "fortune_teller"
