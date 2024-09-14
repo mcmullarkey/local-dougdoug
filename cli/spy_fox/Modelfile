@@ -3,7 +3,7 @@ FROM phi3.5
 # set the temperature to 1 [higher is more creative, lower is more coherent]
 PARAMETER temperature 1
 
-# set context length to maximum to try to fit entire game conversation into the context
+# set context length to try to fit entire game conversation into the context
 PARAMETER num_ctx 32000
 
 # set how many tokens to predict [probably won't be followed exactly but we can try]
