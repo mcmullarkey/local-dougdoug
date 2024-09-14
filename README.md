@@ -16,7 +16,7 @@ Here's a video example of the process:
 
 https://github.com/user-attachments/assets/82cce157-47b9-4c8b-85e6-485b8f974f33
 
-## Inspirtation
+## Inspiration
 
 This repo was inspired by: 
 - DougDoug's [Babagaboosh](https://github.com/DougDougGithub/Babagaboosh) repo
@@ -120,6 +120,8 @@ Once you're in the `cli` directory, run
 If everything has gone well you should be able to start talking at the fortune_teller model!
 
 You press "s" to start the conversation, "Esc" each time you're done speaking (I'd wait a small amount of time after you finish speaking before you hit "Esc"), and "c" to continue the conversation past one time you speak and the model responds. You can hit "q" to quit the conversation.
+
+Note: The first time you try to use a piper-tts voice it will download the voice model necessary to do text-to-speech. This will include a .onnx file and a .onnx.json file.
 
 
 
