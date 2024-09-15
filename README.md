@@ -4,7 +4,7 @@
 
 This repo makes it possible for you to talk to AI characters using a series of local, open-source models.
 
-This setup allows you to talk to the model via speech-to-text powered by [whisper.cpp](https://github.com/ggerganov/whisper.cpp){:target="_blank"}.
+This setup allows you to talk to the model via speech-to-text powered by [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
 
 After the text-to-speech is parsed, it's sent as a prompt to an LLM locally hosted by [Ollama](https://ollama.com/) (like Phi3.5-mini) using an API call.
 
