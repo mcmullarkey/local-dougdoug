@@ -24,8 +24,15 @@ def main():
     
     voice_files = get_model_files(character)
     
-    check_and_download_voice(voice_files,
+    is_voice_custom = get_voice_custom(character)
+    
+    if is_voice_custom:
+        check_and_download_voice(voice_files,
                             f"https://huggingface.co/mcmullarkey/local-dougdoug-voices/resolve/main/{character}/")
+    else:
+        language, dialect, voice_name = get_piper_path(voice)
+        check_and_download_voice(voice_files,
+                            f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{language}/{dialect}/{voice_name}/medium/")
 
     os.makedirs('detected_speech', exist_ok=True)
 
@@ -71,6 +78,20 @@ def get_model_files(character):
         "pajama_sam": ("en_US-lessac-medium.onnx", "en_US-lessac-medium.onnx.json")
     }
     return model_files.get(character)
+
+def get_voice_custom(character):
+    custom_voice = {
+        "spy_fox": True,
+        "fortune_teller": False,
+        "pajama_sam": False
+    }
+    return custom_voice.get(character)
+
+def get_piper_path(voice):
+    voice_language_supercategory = voice[:2]   
+    voice_language_subcategory = voice[:5]
+    name = voice[5:].split('-')[1]
+    return voice_language_supercategory, voice_language_subcategory, name
 
 def check_and_download_voice(files, hf_url):
     for file in files:
