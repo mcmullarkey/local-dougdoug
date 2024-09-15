@@ -90,9 +90,23 @@ Once the local-dougdoug pyenv virtual environment is activated and you've naviga
 
 This will install all the necessary Python dependencies to run the system.
 
+### Installing the Whisper model for speech-to-text
+
+From the `cli` directory, navigate into the `models` directory
+
+`cd models`
+
+and install the base.en Whisper model with the following command
+
+`./download-ggml-model.sh base.en`
+
+Then navigate back to the `cli` directory
+
+`cd ..`
+
 ### Creating the custom Ollama character models
 
-Navigate into the `fortune_teller` subdirectory inside the `cli` directory
+Navigate into the `fortune_teller` directory inside the `cli` directory
 
 `cd fortune_teller`
 
@@ -100,11 +114,11 @@ You can create the custom Ollama model by running
 
 `./create_model.sh`
 
-Note: If this is the first time you're trying to use the base model (in this case Qwen-2-1.5b) from Ollama this command will pull the model from Ollama and install it on your local machine.
+Note: If this is the first time you're trying to use the base model (in this case qwen2:1.5b) from Ollama this command will pull the model from Ollama and install it on your local machine.
 
 When the command completes you should see output that says "Model 'fortune_teller' created successfully."
 
-This command uses the `Modelfile` file to create a custom version of the Qwen-2-1.5b via a system message.
+This command uses the `Modelfile` file to create a custom version of the qwen2:1.5b via a system message.
 
 You can follow this same process for creating the pajama_sam and spy_fox subdirectories.
 
