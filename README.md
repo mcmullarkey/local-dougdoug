@@ -111,18 +111,74 @@ For now, navigate back to the `cli` directory by running
 
 `cd ..`
 
-### Running the system
+### Testing the character voice
+
+Back in the `cli` directory, run the following on the command line
+
+```bash 
+echo 'This sentence is spoken first. This sentence is synthesized while the first sentence is spoken.' | \
+  ./piper --model en_GB-aru-medium.onnx --output-raw | \
+  play -t raw -b 16 -e signed-integer -c 1 -r 22050 -
+```
+
+This should download the voice used by the fortune_teller model and alert you to any issues with the streaming TTS you need to address. If you didn't install `sox` via homebrew above this command won't work.
+
+The files necessary for the a piper-tts text-to-speech voice are a .onnx file and a .onnx.json file. If you ran the above code in the "Testing the character voice" section the voice for fortune_teller should already be downloaded because it's a generic piper-tts model.
+
+If you haven't, the system will throw an error and direct you to the piper-tts Github page for more info. This way you can debug any issues with TTS separately without having to run the entire system first.
+
+If you are doing this process with the spy_fox model, you'll notice that the voice is instead downloaded from HuggingFace. That's because the SpyFox voice is a custom piper-tts model (a voice clone of Spy Fox from the game) that isn't available directly from piper-tts. See "Creating a custom voice model" below.
+
+## Running the system
 
 Once you're in the `cli` directory, run
 
 `sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller`
 
-If everything has gone well you should be able to start talking at the fortune_teller model!
+If everything with the setup has gone well you should be able to start talking at the fortune_teller model!
 
 You press "s" to start the conversation, "Esc" each time you're done speaking (I'd wait a small amount of time after you finish speaking before you hit "Esc"), and "c" to continue the conversation past one time you speak and the model responds. You can hit "q" to quit the conversation.
 
-Note: The first time you try to use a piper-tts voice it will download the voice model necessary to do text-to-speech. This will include a .onnx file and a .onnx.json file.
+## Creating a custom voice model
 
+You can do quite a bit with the models already provided by piper-tts. And if you want to create an entire local, open-source system like DougDoug did with Pajaam Sam you'll need to clone a voice.
 
+Fair warning, this part is far more difficult than using a closed-source model.
+
+The first thing we need to do is get ethically obtained recordings of the voice we'd like to clone.
+
+For the Spy Fox voice clone, I recorded about 6 files of 5-12 seconds each of Spy Fox using [BackgroundMusic](https://github.com/kyleneideck/BackgroundMusic) while audio recording using QuickTime Player on my Mac.
+
+I then used the `convert_m4a_to_wav.sh` script in the `cli/spy_fox/voice_cloning/` subdirectory to convert the .m4a files I'd generated via those recordings to  22050 Hz 16-bit, mono .wav files.
+
+For ease of use later I'd highly recommend doing what I did and naming the files 1.wav, 2.wav, etc.
+
+I then created the transcripts of those clips by hand to ensure 100% accuracy and created the file `cli/spy_fox/voice_cloning/transcripts.txt` The exact formatting of the file is important and example couple of lines looks like:
+
+```
+wavs/1.wav|Hm, so this is the sleepy little Greek island of Acedopholis. I seem to have arrived unfashionably early since nothing seems to be open.
+wavs/2.wav|Someone once said the secret to life is making good decisions, which comes from good judgment, which comes from making bad decisions. I just thought I'd share that.
+```
+
+I've seen people recommend getting an hour of samples to train a high quality voice. I was able to get something serviceable for fun with ~1 minute of total voice time. However, using less audio shows in the ultimate voice clone (plenty of static and artificats). I also didn't isolate Spy Fox's voice from any background noises or music in the game. I also went with a medium-quality voice for speed purposes.
+
+From here, I recommend using Google Colab to create the custom voice clone unless you have an awesome GPU locally. I certainly don't, so I used Colab.
+
+There is a piper-tts training notebook, but as of this writing if you use it the code will run but the voice won't be usable. Instead using [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_multilingual_training_notebook.ipynb) that's a PR currently waiting to be merged on the  original piper-tts repo.
+
+After following the instructions in the training notebook you should be able to use [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_model_exporter.ipynb) from the same PR to export the voice files.
+
+The export notebook has a lot of bells and whistles, and just running this quick chunk in Colab got me my model files exported and ready to download
+
+```
+!python3 -m piper_train.export_onnx \
+    /content/last.ckpt \
+    /content/en_US-spy-fox-medium.onnx
+    
+!cp /content/config.json \
+   /content/en_US-spy-fox-medium.onnx.json
+```
+
+Finally, make sure to put both the .onnx and .onnx.json files in the same directory as the script you're running + update the calls to the voices to the names of your custom files.
 
 
