@@ -17,7 +17,15 @@ def main():
     if not validate_arguments():
         return
 
-    ollama_model, character_image, voice = get_model_details(sys.argv[1])
+    character = sys.argv[1]
+    print(f"The detected character is: {character}")
+    
+    ollama_model, character_image, voice = get_model_details(character)
+    
+    voice_files = get_model_files(character)
+    
+    check_and_download_voice(voice_files,
+                            f"https://huggingface.co/mcmullarkey/local-dougdoug-voices/resolve/main/{character}/")
 
     os.makedirs('detected_speech', exist_ok=True)
 
@@ -55,6 +63,27 @@ def get_model_details(character):
         "pajama_sam": ("pajama_sam", "pajama_sam/images/Pajama_Sam.png", "en_US-lessac-medium.onnx"),
     }
     return models.get(character)
+
+def get_model_files(character):
+    model_files = {
+        "spy_fox": ("en_US-spy-fox-medium.onnx", "en_US-spy-fox-medium.onnx.json"),
+        "fortune_teller": ("en_GB-aru-medium.onnx", "en_GB-aru-medium.onnx.json"),
+        "pajama_sam": ("en_US-lessac-medium.onnx", "en_US-lessac-medium.onnx.json")
+    }
+    return model_files.get(character)
+
+def check_and_download_voice(files, hf_url):
+    for file in files:
+        if not os.path.exists(file):
+            print(f"{file} not found, downloading...")
+            download_url = f"{hf_url}{file}"
+            print(f"The download url is {download_url}")
+            try:
+                subprocess.run(f"curl -L {download_url} -o {file}", shell=True, check=True)
+            except:
+                print("Model not available from HuggingFace repo, check for typos in command line call to a custom voice model or piper-tts Github for how to download generic models")
+        else:
+            print(f"{file} already exists.")
 
 def wait_for_start_or_quit():
     print("Press 'q' to exit or 's' to start the conversation.")
