@@ -43,8 +43,9 @@ Note: This setup has only been tested directly on an Intel-chip MacOS.
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
-We'll then use `homebrew` to install the other necessary items using this command in the terminal:
+We'll then use `homebrew` to install the other necessary items using these commands in the terminal:
 
+`brew update`
 `brew install pyenv ollama sox`
 
 `pyenv` allows us to use specific versions of Python as well as create virtual environments. We'll need both of those things for this project!
@@ -111,33 +112,55 @@ For now, navigate back to the `cli` directory by running
 
 `cd ..`
 
-### Testing the character voice
-
-Back in the `cli` directory, run the following on the command line
-
-```bash 
-echo 'This sentence is spoken first. This sentence is synthesized while the first sentence is spoken.' | \
-  ./piper --model en_GB-aru-medium.onnx --output-raw | \
-  play -t raw -b 16 -e signed-integer -c 1 -r 22050 -
-```
-
-This should download the voice used by the fortune_teller model and alert you to any issues with the streaming TTS you need to address. If you didn't install `sox` via homebrew above this command won't work.
-
-The files necessary for the a piper-tts text-to-speech voice are a .onnx file and a .onnx.json file. If you ran the above code in the "Testing the character voice" section the voice for fortune_teller should already be downloaded because it's a generic piper-tts model.
-
-If you haven't, the system will throw an error and direct you to the piper-tts Github page for more info. This way you can debug any issues with TTS separately without having to run the entire system first.
-
-If you are doing this process with the spy_fox model, you'll notice that the voice is instead downloaded from HuggingFace. That's because the SpyFox voice is a custom piper-tts model (a voice clone of Spy Fox from the game) that isn't available directly from piper-tts. See "Creating a custom voice model" below.
-
 ## Running the system
 
 Once you're in the `cli` directory, run
 
 `sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller`
 
-If everything with the setup has gone well you should be able to start talking at the fortune_teller model!
+If everything with the setup has gone well you should be able to start talking at the fortune_teller model! Running this will also automatically download the piper-tts voice model into the same directory where you run this process. This will work for either generic piper-tts voices or custom voice clones in [this HuggingFace repo](https://huggingface.co/mcmullarkey/local-dougdoug-voices).
 
 You press "s" to start the conversation, "Esc" each time you're done speaking (I'd wait a small amount of time after you finish speaking before you hit "Esc"), and "c" to continue the conversation past one time you speak and the model responds. You can hit "q" to quit the conversation.
+
+## Troubleshooting
+
+### Speech-to-text
+
+First, the program may not 100% capture your text accurately at baseline. The text parser may also include repeats of statements if two lines' fuzzy-matching similarity wasn't quite similar enough to trigger replacing the line. 
+
+If you're getting repeated lines too often feel free to decrease the `similarity` argument in the `parse_speech()` function from 50 and try running the script again. 
+
+If the speech-to-text isn't working at all I'd recommend checking the [whisper.cpp](https://github.com/ggerganov/whisper.cpp/issues) repo and seeing if any open or closed Github issues answer your questions
+
+### Local LLM API call
+
+Make sure you're running a small enough model to fit on your local resources. `qwen2:0.5b` as a base model should work on almost any modern-ish machine other than a Raspberry Pi (and maybe even then!)
+
+Make sure your Ollama port is set as `11434` since the API calls go to `http://localhost:11434/api/chat`
+
+If you're having other issues the [Ollama Discord](https://discord.com/invite/ollama) has a #help channel. You can see if your issue is solved already or you can ask your specific question.
+
+### Text-to-speech
+
+If everything else is running well but you're not having the responses read out loud, there's a chance the voice model didn't download properly.
+
+Try running
+
+```
+sudo echo 'Welcome to the world of speech synthesis!' '|' piper '' --model en_US-lessac-medium '' --output_file welcome.wav && afplay welcome.wav
+```
+
+replacing en_US-lessac-medium with whatever voice you're trying to use if you're on a Mac. Make sure to only use, for example, `en_US-lessac-medium` instead of `en_US-lessac-medium.onnx` or `en_US-lessac-medium.onnx.json` 
+
+Running this command will help confirm whether the voice file is downloaded and is working for text-to-speech.
+
+One potential fix is either installing or reinstalling `sox` via homebrew.
+
+`brew update`
+`brew install sox`
+`brew upgrade sox`
+
+If you're still stuck I recommend checking the [piper-tts](https://github.com/rhasspy/piper/issues) repo and seeing if any open or closed Github issues answer your questions
 
 ## Creating a custom voice model
 
@@ -164,11 +187,13 @@ I've seen people recommend getting an hour of samples to train a high quality vo
 
 From here, I recommend using Google Colab to create the custom voice clone unless you have an awesome GPU locally. I certainly don't, so I used Colab.
 
-There is a piper-tts training notebook, but as of this writing if you use it the code will run but the voice won't be usable. Instead using [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_multilingual_training_notebook.ipynb) that's a PR currently waiting to be merged on the  original piper-tts repo.
+There is a piper-tts training notebook for custom voices, but as of this writing if you use the notebook on the main branch the code will run but the voice won't be usable. 
 
-After following the instructions in the training notebook you should be able to use [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_model_exporter.ipynb) from the same PR to export the voice files.
+Instead, use [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_multilingual_training_notebook.ipynb) that's a PR currently waiting to be merged on the original piper-tts repo.
 
-The export notebook has a lot of bells and whistles, and just running this quick chunk in Colab got me my model files exported and ready to download
+After following the instructions in the training notebook you should be able to use [this notebook](https://github.com/rmcpantoja/piper/blob/master/notebooks/piper_model_exporter.ipynb) from the same PR to export the .onnx and .onnx.json voice files.
+
+The export notebook has a lot of bells and whistles, and just running this quick chunk in Colab (if your last.ckpt and config.json files are saved in the /content/ directory) got me my model files exported and ready to download
 
 ```
 !python3 -m piper_train.export_onnx \
@@ -179,6 +204,6 @@ The export notebook has a lot of bells and whistles, and just running this quick
    /content/en_US-spy-fox-medium.onnx.json
 ```
 
-Finally, make sure to put both the .onnx and .onnx.json files in the same directory as the script you're running + update the calls to the voices to the names of your custom files.
+Finally, make sure to put both the .onnx and .onnx.json files in the same directory as the script you're running + update the calls to the voices to the names of your custom files. You'll also have to modify the `get_model_details(), get_model_files(), get_voice_custom()`, and `check_and_download_voice()` functions to include a call to your custom character.
 
 
