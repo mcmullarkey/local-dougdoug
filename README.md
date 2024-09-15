@@ -4,7 +4,7 @@
 
 This repo makes it possible for you to talk to AI characters using a series of local, open-source models.
 
-This setup allows you to talk to the model via speech-to-text powered by [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
+This setup allows you to talk to the model via speech-to-text powered by [whisper.cpp](https://github.com/ggerganov/whisper.cpp){:target="_blank"}.
 
 After the text-to-speech is parsed, it's sent as a prompt to an LLM locally hosted by [Ollama](https://ollama.com/) (like Phi3.5-mini) using an API call.
 
@@ -91,7 +91,7 @@ This will install all the necessary Python dependencies to run the system.
 
 ### Creating the custom Ollama character models
 
-Vavigate into the `fortune_teller` subdirectory inside the `cli` directory
+Navigate into the `fortune_teller` subdirectory inside the `cli` directory
 
 `cd fortune_teller`
 
