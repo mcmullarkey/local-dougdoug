@@ -1,9 +1,12 @@
 coloredlogs==15.0.1
 flatbuffers==24.3.25
+fuzzywuzzy==0.18.0
 humanfriendly==10.0
 keyboard==0.13.5
+Levenshtein==0.25.1
 mpmath==1.3.0
 numpy==2.1.0
+onnx==1.16.2
 onnxruntime==1.19.0
 packaging==24.1
 piper-phonemize==1.1.0
@@ -160,4 +163,6 @@ pyobjc-framework-VideoToolbox==10.3.1
 pyobjc-framework-Virtualization==10.3.1
 pyobjc-framework-Vision==10.3.1
 pyobjc-framework-WebKit==10.3.1
+python-Levenshtein==0.25.1
+rapidfuzz==3.9.7
 sympy==1.13.2
