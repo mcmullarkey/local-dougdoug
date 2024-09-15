@@ -6,7 +6,7 @@ This repo makes it possible for you to talk to AI characters using a series of l
 
 This setup allows you to talk to the model via speech-to-text powered by [whisper.cpp](https://github.com/ggerganov/whisper.cpp).
 
-After the text-to-speech is parsed, it's sent as a prompt to an LLM locally hosted by [Ollama](https://ollama.com/) (like Phi3.5-mini) using an API call.
+After the text-to-speech is parsed, it's sent as a prompt to an LLM locally hosted by [Ollama](https://ollama.com/) (like phi3.5) using an API call.
 
 The local LLM's response is streamed back and read aloud using [piper-tts](https://github.com/rhasspy/piper) while a simple character animation plays on screen. You can use a preset voice or clone a custom one.
 
@@ -22,7 +22,7 @@ This repo was inspired by:
 - DougDoug's [Babagaboosh](https://github.com/DougDougGithub/Babagaboosh) repo
 - [His video](https://youtu.be/W3id8E34cRQ?si=oRPEyZjjm58Z0lTv) where he created a system of proprietary AIs that completed the children's game Pajama Sam
 
-This repo's AI system can all run locally on a 5 year old, Intel Chip Macbook Pro in near real-time for smaller models like Phi-3.5-mini and Qwen-2-1.5b.
+This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in near real-time for smaller Ollama models `phi3.5` and `qwen2:1.5b`.
 
 ## Important note
 
