@@ -10,7 +10,10 @@ from multiprocessing import Process, Event
 import re
 import sys
 from fuzzywuzzy import fuzz
+import time
+import random
 
+# Initialize conversation history
 conversation_history = []
 
 def main():
@@ -20,7 +23,7 @@ def main():
     character = sys.argv[1]
     print(f"The detected character is: {character}")
     
-    ollama_model, character_image, voice = get_model_details(character)
+    ollama_model, character_image, voice, activation, deactivation = get_model_details(character)
     
     voice_files = get_model_files(character)
     
@@ -37,22 +40,26 @@ def main():
     os.makedirs('detected_speech', exist_ok=True)
 
     while True:
-        if not wait_for_start_or_quit():
-            return
+        if not listen_for_activation(activation, deactivation):
+            continue  # If deactivated, keep listening for activation
+        
+        give_opening_response(character_image, voice)
+        
+        time.sleep(5)
+        
+        prompt_text = get_speech_prompt(activation, deactivation)
 
-        # Now wait for the user to press 's' before proceeding
-        if wait_for_start_signal():
-            run_speech_detection()
-            prompt_text = parse_speech("detected_speech/", 50)
+        if not prompt_text:
+            print("No prompt detected, waiting for activation again.")
+            continue
 
-            print(f"The detected prompt text is: {prompt_text}")
+        print(f"The detected prompt text is: {prompt_text}")
+        conversation_history.append({"role": "user", "content": prompt_text})
 
-            conversation_history.append({"role": "user", "content": prompt_text})
+        send_to_ollama(ollama_model, character_image, voice)
 
-            send_to_ollama(ollama_model, character_image, voice)
+        # Optional: Automatically listen for further conversation or activation again
 
-            if not wait_for_continue_or_quit():
-                return
 
 def validate_arguments():
     if len(sys.argv) < 2:
@@ -65,9 +72,9 @@ def validate_arguments():
 
 def get_model_details(character):
     models = {
-        "spy_fox": ("spy_fox", "spy_fox/images/spy_fox.png", "en_US-spy-fox-medium.onnx"),
-        "fortune_teller": ("fortune_teller", "fortune_teller/images/fortune_teller.png", "en_GB-aru-medium.onnx"),
-        "pajama_sam": ("pajama_sam", "pajama_sam/images/Pajama_Sam.png", "en_US-lessac-medium.onnx"),
+        "spy_fox": ("spy_fox", "spy_fox/images/spy_fox.png", "en_US-spy-fox-medium.onnx", "rise", "sleep"),
+        "fortune_teller": ("fortune_teller", "fortune_teller/images/fortune_teller.png", "en_GB-aru-medium.onnx", "rise", "sleep"),
+        "pajama_sam": ("pajama_sam", "pajama_sam/images/Pajama_Sam.png", "en_US-lessac-medium.onnx", "rise", "sleep"),
     }
     return models.get(character)
 
@@ -106,48 +113,108 @@ def check_and_download_voice(files, hf_url):
         else:
             print(f"{file} already exists.")
 
-def wait_for_start_or_quit():
-    print("Press 'q' to exit or 's' to start the conversation.")
-    while True:
-        if keyboard.is_pressed('q'):
-            print("Exiting the program.")
-            return False
-        if keyboard.is_pressed('s'):
-            return True
 
-def wait_for_start_signal():
-    print("Press 's' to start speech detection.")
+def listen_for_activation(activation, deactivation):
+    print("Listening for activation phrase...")
+    
     while True:
-        if keyboard.is_pressed('s'):
-            print("Start speaking when prompted, press Esc when done speaking.")
-            return True
+        process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
+                                   stdout=open(f"detected_speech/{datetime.datetime.now()}_detected_speech.txt", 'w'), 
+                                   stderr=subprocess.STDOUT, 
+                                   shell=True)
 
-def wait_for_continue_or_quit():
-    print("Press 'c' to continue the conversation, or 'q' to quit.")
-    while True:
-        if keyboard.is_pressed('q'):
-            print("Conversation ended.")
-            return False
-        if keyboard.is_pressed('c'):
-            print("Continuing the conversation...")
-            return True
+        def check_activation(proc, activation, deactivation):
+            while True:
+                detected_text = parse_speech("detected_speech/", similarity_threshold=50)
+                if activation in detected_text:
+                    print(f"Activation phrase '{activation}' detected.")
+                    proc.terminate()  # Stop activation listening
+                    proc.wait()
+                    return True
+                if deactivation in detected_text:
+                    print(f"Deactivation phrase '{deactivation}' detected. Reverting to activation listening.")
+                    proc.terminate()  # Stop the process
+                    proc.wait()
+                    return False
 
-def run_speech_detection():
+        listener_thread = threading.Thread(target=check_activation, args=(process, activation, deactivation))
+        listener_thread.start()
+        listener_thread.join()
+
+        if listener_thread.is_alive():
+            continue  # Keep listening until deactivation or activation
+
+        return True  # Activation detected, ready for conversation
+
+def give_opening_response(character_image, voice):
+    
+    if character_image == "fortune_teller/images/fortune_teller.png":
+                        opening_responses = [
+                            """It is I, Enigma, the devourer of souls. Ask your question, but be quick.
+                            """,
+                            """You have summoned Enigma, haunter of all the living. Give me your question
+                            without delay.
+                            """,
+                            """Enigma peeks from beyond the veil. Ask your fortune if you dare.
+                            """,
+                            """I am Enigma, the teller of grim stories no one dares read. 
+                            Ask me about your story, but don't wait too long.
+                            """,
+                            """I am Enigma, I've seen so many like you. 
+                            Tell me what you want, but don't make me wait.
+                            """,
+                            """I am Enigma, ask what you will before I go back to the land of nightmares.
+                            """,
+                            """I am Enigma, the guide to the damned and the fools. Ask my guidance now.
+                            """,
+                            """You sit before Enigma, a power you cannot comprehend. 
+                            Tell me what you want to know now.
+                            """
+                        ]
+                        
+    respond_with_tts({"message": {"content": random.choice(opening_responses)}}, character_image, voice)
+    
+
+
+def get_speech_prompt(activation, deactivation):
+    print("Listening for speech prompt...")
+
     process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
                                stdout=open(f"detected_speech/{datetime.datetime.now()}_detected_speech.txt", 'w'), 
                                stderr=subprocess.STDOUT, 
                                shell=True)
-    print("Started speech detection")
 
-    def listen_for_stop(proc):
-        keyboard.wait('esc')
-        proc.terminate()
-        proc.wait()
-        print("Speech detection terminated")
+    def listen_for_prompt(proc):
+        while True:
+            prompt_text = parse_speech("detected_speech/", similarity_threshold=50)
+            if any(phrase in prompt_text for phrase in ["[silence]", "[blank_audio]", 
+                                                        "(muffled speaking)", "[Music]",
+                                                        "[inaudible]"]):
+                print("Likely end of speaking detected. Terminating speech detection.")
+                proc.terminate()
+                proc.wait()
+                print("Speech detection terminated.")
+                return  # Exit the loop
+            if deactivation in prompt_text:
+                print(f"Deactivation phrase '{deactivation}' detected. Reverting to activation listening.")
+                proc.terminate()
+                proc.wait()
+                return  # Exit to listen for activation
 
-    listener_thread = threading.Thread(target=listen_for_stop, args=(process,))
+            # Optional: Add a sleep or a small delay to prevent constant CPU usage
+            time.sleep(1)
+
+    listener_thread = threading.Thread(target=listen_for_prompt, args=(process,))
     listener_thread.start()
-    listener_thread.join() 
+    listener_thread.join()
+
+    prompt_text = parse_speech("detected_speech/", similarity_threshold=50)
+    if not prompt_text.strip():
+        print("No valid speech detected.")
+        return ""
+    
+    return prompt_text
+
 
 def parse_speech(directory_path, similarity_threshold):
     print("Parsing speech...")
@@ -160,10 +227,11 @@ def parse_speech(directory_path, similarity_threshold):
         lines = f.readlines()
 
     speech_lines = extract_speech_lines(lines, similarity_threshold)
-    result = ' '.join(speech_lines).strip()
+    result = ' '.join(speech_lines).strip().lower()
     result = re.sub(r'\s+', ' ', result)
 
-    return result
+    return result 
+
 
 def get_latest_file(directory_path):
     files = glob.glob(os.path.join(directory_path, '*.txt'))

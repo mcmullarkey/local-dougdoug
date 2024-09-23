@@ -165,6 +165,7 @@ cython_debug/
 .bin
 .DS_Store
 cli/detected_speech/*
+no-touch/detected_speech/*
 *.mp3
 *.wav
 *.m4a
