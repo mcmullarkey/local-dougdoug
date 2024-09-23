@@ -271,16 +271,16 @@ def respond_with_tts(response_text, image_path, voice_type):
     print("Responding with TTS...")
     os.system("killall afplay")
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
+    env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
+    
     response = escape_and_replace(response_text['message']['content'])
     tts_command = (
         f"echo '{response}' | "
         f"piper --model {voice_type} --output-raw | "
         "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
     )
-
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
-    env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
 
     tts_done_event = Event()
 
