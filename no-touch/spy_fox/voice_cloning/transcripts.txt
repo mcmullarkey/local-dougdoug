@@ -1,0 +1,6 @@
+wavs/1.wav|Hm, so this is the sleepy little Greek island of Acedopholis. I seem to have arrived unfashionably early since nothing seems to be open.
+wavs/2.wav|Someone once said the secret to life is making good decisions, which comes from good judgment, which comes from making bad decisions. I just thought I'd share that.
+wavs/3.wav|I would karate chop my way right through a door. But this one seems to be made of solid steel.
+wavs/4.wav|The nice thing about being in the intelligence business is everyone assumes you're intelligent.
+wavs/5.wav|I'll keep my extraordinarily sharp eyes open for clues, so I can find Kid's secret fortress.
+wavs/6.wav|I ask myself, if I were an evil, twisted, misguided, egotistical supervillain where would I put my secret fortress.
