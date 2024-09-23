@@ -1,4 +1,4 @@
-FROM qwen2:1.5b
+FROM qwen2.5:1.5b
 
 # set the temperature to 1 [higher is more creative, lower is more coherent]
 PARAMETER temperature 1
