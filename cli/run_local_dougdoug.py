@@ -10,6 +10,7 @@ from multiprocessing import Process, Event
 import re
 import sys
 from fuzzywuzzy import fuzz
+import platform
 
 conversation_history = []
 
@@ -269,11 +270,12 @@ def handle_response_stream(response, image_path, voice):
 
 def respond_with_tts(response_text, image_path, voice_type):
     print("Responding with TTS...")
-    os.system("killall afplay")
-
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
-    env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
+    
+    if platform.system() == "Darwin":  # macOS
+        os.system("killall afplay")
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
+        env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
     
     response = escape_and_replace(response_text['message']['content'])
     tts_command = (
