@@ -172,3 +172,4 @@ no-touch/detected_speech/*
 *.onnx
 *.onnx.json
 *.zip
+margaret_grant_playthrough.txt
