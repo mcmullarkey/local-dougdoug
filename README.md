@@ -1,5 +1,9 @@
 # A local AI setup for talking to characters
 
+# A video example
+
+https://github.com/user-attachments/assets/82cce157-47b9-4c8b-85e6-485b8f974f33
+
 ## Which models we're using and what they do
 
 This repo makes it possible for you to talk to AI characters using a series of local, open-source models.
@@ -12,10 +16,6 @@ The local LLM's response is streamed back and read aloud using [piper-tts](https
 
 You can then repeat these setps to continue the conversation, and the entire conversation history will be sent to the model each time.
 
-Here's a video example of the process:
-
-https://github.com/user-attachments/assets/82cce157-47b9-4c8b-85e6-485b8f974f33
-
 ## Inspiration
 
 This repo was inspired by: 
@@ -23,6 +23,51 @@ This repo was inspired by:
 - [His video](https://youtu.be/W3id8E34cRQ?si=oRPEyZjjm58Z0lTv) where he created a system of proprietary AIs that completed the children's game Pajama Sam
 
 This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in near real-time for smaller Ollama models `phi3.5` and `qwen2:1.5b`.
+
+## Using with Docker (Recommended)
+
+Still to do:
+- Push image to Dockerhub
+- Make sure we can change MODELFILE_BASE_PATH as needed
+- Make sure all create_model.sh files have execute permissions
+- Debug issue with character animation not playing
+- Add section on building Docker image yourself
+
+Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
+
+On MacOS:
+
+We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+
+Then, we'll install `pulseaudio` to handle audio parts with:
+
+`brew install pulseaudio`
+
+Then we'll get `pulseaudio` up and running in a way that will work with Docker
+
+```
+pulseaudio --start --exit-idle-time=-1 --log-target=newfile:/tmp/pulse.log
+pactl load-module module-native-protocol-tcp auth-anonymous=1
+```
+
+Then run
+
+`pulseaudio --check`
+
+and if you get no output you're good to go.
+
+To run the Docker image use the following terminal command
+
+```
+docker run -it \
+    -e PULSE_SERVER=host.docker.internal \
+    -v ~/.config/pulse/cookie:/root/.config/pulse/cookie \
+    --device /dev/snd \
+    --privileged \
+    local_dougdoug fortune_teller
+
+```
 
 ## Important note
 
@@ -33,6 +78,12 @@ This version of the system is something I primarily created to see:
 - If I could make a spooky fortune teller for a Halloween party
 
 I decided to share because I thought folks might find it interesting to get into the guts of how to make a system like this work.
+
+## Non-Docker installation and usage
+
+Note: Not recommended unless for educational purposes! Breaking changes may occur that make this walkthrough obselete at any point.
+
+If you'd like to follow this walkthrough at a point where the walkthrough will work, you can clone this repo and revert to commit c128187.
 
 ## Current setup
 

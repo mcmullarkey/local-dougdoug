@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Define the path to the Modelfile
-MODELFILE_PATH="./Modelfile"
+# Use the environment variable MODELFILE_BASE_PATH or fallback to the current directory
+MODELFILE_PATH="${MODELFILE_BASE_PATH:-$(pwd)}/Modelfile"
 
 # Check if the Modelfile exists
 if [ ! -f "$MODELFILE_PATH" ]; then

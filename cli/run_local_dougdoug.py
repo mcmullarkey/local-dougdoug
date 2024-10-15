@@ -1,7 +1,7 @@
 import subprocess
 import datetime
 import threading
-import keyboard
+# import keyboard
 import glob
 import os
 import json
@@ -11,6 +11,7 @@ import re
 import sys
 from fuzzywuzzy import fuzz
 import platform
+import time
 
 conversation_history = []
 
@@ -36,6 +37,10 @@ def main():
                             f"https://huggingface.co/rhasspy/piper-voices/resolve/main/{language}/{dialect}/{voice_name}/medium/")
 
     os.makedirs('detected_speech', exist_ok=True)
+    
+    check_and_start_ollama()
+    
+    create_ollama_model(character)
 
     while True:
         if not wait_for_start_or_quit():
@@ -60,7 +65,7 @@ def validate_arguments():
         print("Error: Missing character argument.")
         return False
     if sys.argv[1] not in ["spy_fox", "fortune_teller", "pajama_sam"]:
-        print("Error: Invalid character. Choose 'spy_fox', 'fortune_teller', or 'pajama_sam'.")
+        print(f"Error: Invalid character. You chose {sys.argv[1]} Choose 'spy_fox', 'fortune_teller', or 'pajama_sam'.")
         return False
     return True
 
@@ -107,31 +112,58 @@ def check_and_download_voice(files, hf_url):
         else:
             print(f"{file} already exists.")
 
+def check_and_start_ollama():
+    try:
+        # Check if Ollama server is running
+        subprocess.run(["curl", "http://localhost:11434"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print("Ollama server is already running.")
+    except subprocess.CalledProcessError:
+        print("Ollama server not running. Starting the server...")
+        # Start the Ollama server
+        subprocess.Popen(["ollama", "serve"])
+
+        # Wait for the server to be fully up
+        while True:
+            try:
+                subprocess.run(["curl", "http://localhost:11434"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print("Ollama server is now running.")
+                break
+            except subprocess.CalledProcessError:
+                print("Waiting for Ollama server to start...")
+                time.sleep(2)
+
+def create_ollama_model(character):
+    try:
+        result = subprocess.run(['bash', f"{character}/create_model.sh"], check=True, capture_output=True, text=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred: {e}")
+        print(f"Standard Output: {e.stdout}")
+        print(f"Standard Error: {e.stderr}")
+        return None
+
 def wait_for_start_or_quit():
-    print("Press 'q' to exit or 's' to start the conversation.")
-    while True:
-        if keyboard.is_pressed('q'):
-            print("Exiting the program.")
-            return False
-        if keyboard.is_pressed('s'):
-            return True
+    choice = input("Press 'q' and then 'Enter' to exit or 's' and then 'Enter' to start the conversation: ").strip().lower()
+    if choice == 'q':
+        print("Exiting the program.")
+        return False
+    elif choice == 's':
+        return True
+    return True
 
 def wait_for_start_signal():
-    print("Press 's' to start speech detection.")
-    while True:
-        if keyboard.is_pressed('s'):
-            print("Start speaking when prompted, press Esc when done speaking.")
-            return True
+    input("Press 'Enter' to start speech detection. Start speaking when prompted, press Enter again when done speaking.")
+    return True
 
 def wait_for_continue_or_quit():
-    print("Press 'c' to continue the conversation, or 'q' to quit.")
-    while True:
-        if keyboard.is_pressed('q'):
-            print("Conversation ended.")
-            return False
-        if keyboard.is_pressed('c'):
-            print("Continuing the conversation...")
-            return True
+    choice = input("Press 'c' and then 'Enter' to continue the conversation, or 'q' and then 'Enter' to quit: ").strip().lower()
+    if choice == 'q':
+        print("Conversation ended.")
+        return False
+    elif choice == 'c':
+        print("Continuing the conversation...")
+        return True
+    return True
 
 def run_speech_detection():
     process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
@@ -141,7 +173,7 @@ def run_speech_detection():
     print("Started speech detection")
 
     def listen_for_stop(proc):
-        keyboard.wait('esc')
+        input("Press Enter to stop speech detection.")
         proc.terminate()
         proc.wait()
         print("Speech detection terminated")
@@ -271,34 +303,29 @@ def handle_response_stream(response, image_path, voice):
 def respond_with_tts(response_text, image_path, voice_type):
     print("Responding with TTS...")
     
-    if platform.system() == "Darwin":  # macOS
-        os.system("killall afplay")
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/lib/python3.11.9/site-packages")
-        env["PATH"] = os.path.expanduser("~/.pyenv/versions/local-dougdoug/bin") + ":" + env["PATH"]
-    
     response = escape_and_replace(response_text['message']['content'])
+    
     tts_command = (
-        f"echo '{response}' | "
-        f"piper --model {voice_type} --output-raw | "
-        "play -t raw -b 16 -e signed-integer -c 1 -r 22050 -"
+    f"echo '{response}' | "
+    f"piper --model {voice_type} --output-raw | "
+    "pacat --format=s16le --channels=1 --rate=22050"
     )
 
     tts_done_event = Event()
 
-    tts_process = Process(target=run_tts, args=(tts_command, env, tts_done_event))
+    tts_process = Process(target=run_tts, args=(tts_command, tts_done_event))
     tts_process.start()
 
     pygame_process = Process(target=character_animation, args=(image_path, tts_done_event))
     pygame_process.start()
-
+    
     tts_process.join()
     pygame_process.join()
 
     print("TTS and animation processes should now be complete.")
 
-def run_tts(tts_command, env, tts_done_event):
-    subprocess.run(tts_command, shell=True, env=env)
+def run_tts(tts_command, tts_done_event):
+    subprocess.run(tts_command, shell=True)
     tts_done_event.set()
 
 def character_animation(image_path, tts_done_event):
