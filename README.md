@@ -66,24 +66,22 @@ docker run -it \
     --device /dev/snd \
     --privileged \
     local_dougdoug fortune_teller
-
 ```
 
 ## Important note
 
-The process of installing this system isn't anywhere close to user-friendly! 
-
 This version of the system is something I primarily created to see: 
 - If an AI could play through Spy Fox with friends
 - If I could make a spooky fortune teller for a Halloween party
+- If I could Dockerize a relatively complicated series of models
 
 I decided to share because I thought folks might find it interesting to get into the guts of how to make a system like this work.
 
 ## Non-Docker installation and usage
 
-Note: Not recommended unless for educational purposes! Breaking changes may occur that make this walkthrough obselete at any point.
+Note: Not recommended unless for educational purposes! Breaking changes may occur that make this walkthrough obselete at any point. The process of installing this system isn't anywhere close to user-friendly! 
 
-If you'd like to follow this walkthrough at a point where the walkthrough will work, you can clone this repo and revert to commit c128187.
+If you'd still like to follow this walkthrough at a point where the walkthrough will work, you can clone this repo and revert to commit c128187.
 
 ## Current setup
 
