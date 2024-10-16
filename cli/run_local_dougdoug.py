@@ -49,6 +49,8 @@ def main():
         # Now wait for the user to press 's' before proceeding
         if wait_for_start_signal():
             run_speech_detection()
+            print("Checking detected_speech/ directory...")
+            print(os.listdir('detected_speech/'))
             prompt_text = parse_speech("detected_speech/", 50)
 
             print(f"The detected prompt text is: {prompt_text}")
@@ -166,29 +168,39 @@ def wait_for_continue_or_quit():
     return True
 
 def run_speech_detection():
-    process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
-                               stdout=open(f"detected_speech/{datetime.datetime.now()}_detected_speech.txt", 'w'), 
-                               stderr=subprocess.STDOUT, 
-                               shell=True)
-    print("Started speech detection")
+    try:
+        with open(f"detected_speech/{datetime.datetime.now()}_detected_speech.txt", 'w') as output_file:
+            process = subprocess.Popen(["./stream", "-m", "./models/ggml-base.en.bin", "-t", "8", "--step", "0", "--length", "30000", "-vth", "0.6"], 
+                                       stdout=output_file, 
+                                       stderr=subprocess.STDOUT, 
+                                       shell=False
+                                       )
+            print("Started speech detection")
+    
+            def listen_for_stop(proc):
+                input("Press Enter to stop speech detection.")
+                proc.terminate()
+                proc.wait()
+                print("Speech detection terminated")
 
-    def listen_for_stop(proc):
-        input("Press Enter to stop speech detection.")
-        proc.terminate()
-        proc.wait()
-        print("Speech detection terminated")
-
-    listener_thread = threading.Thread(target=listen_for_stop, args=(process,))
-    listener_thread.start()
-    listener_thread.join() 
+            listener_thread = threading.Thread(target=listen_for_stop, args=(process,))
+            listener_thread.start()
+            listener_thread.join()
+    except Exception as e:
+        print(f"An error occurred: {e}") 
 
 def parse_speech(directory_path, similarity_threshold):
     print("Parsing speech...")
 
     file_path = get_latest_file(directory_path)
+    print(f"File detected: {file_path}")
     if not file_path:
-        return ""
-
+        return "File path not detected"
+    
+    with open(file_path, 'r') as f:
+            file_contents = f.read()
+            print(f"Contents of {file_path}:\n{file_contents}")
+    
     with open(file_path, 'r') as f:
         lines = f.readlines()
 
@@ -234,9 +246,18 @@ def extract_speech_lines(lines, similarity_threshold):
     return speech_lines
 
 def clean_speech_line(line):
-    cleaned_line = line.strip()
-    cleaned_line = re.sub(r'\[\d+[A-Z]*', '', cleaned_line)
-    return re.sub(r'[^\x20-\x7E]+', '', cleaned_line)
+    # Remove transcription markers like "### Transcription 0 START" or "### Transcription 0 END"
+    if line.startswith("### Transcription"):
+        return ""
+    
+    # Remove timestamp blocks like "[00:00:00.000 --> 00:00:05.000]"
+    cleaned_line = re.sub(r'\[\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}\]', '', line)
+    
+    # Remove any remaining non-printable characters
+    cleaned_line = re.sub(r'[^\x20-\x7E]+', '', cleaned_line)
+    
+    # Return stripped line if it's not empty
+    return cleaned_line.strip()
 
 def send_to_ollama(ollama_model, image_path, voice):
     print("Sending to Ollama...")

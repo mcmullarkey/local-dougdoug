@@ -47,9 +47,14 @@ Then, we'll install `pulseaudio` to handle audio parts with:
 Then we'll get `pulseaudio` up and running in a way that will work with Docker
 
 ```
+killall pulseaudio
 pulseaudio --start --exit-idle-time=-1 --log-target=newfile:/tmp/pulse.log
-pactl load-module module-native-protocol-tcp auth-anonymous=1
 ```
+Then run
+
+`pactl load-module module-native-protocol-tcp auth-anonymous=1`
+
+This command should return an integer (for example: 26)
 
 Then run
 
@@ -62,6 +67,7 @@ To run the Docker image use the following terminal command
 ```
 docker run -it \
     -e PULSE_SERVER=host.docker.internal \
+    -e MODELFILE_BASE_PATH="/app/fortune_teller" \
     -v ~/.config/pulse/cookie:/root/.config/pulse/cookie \
     --device /dev/snd \
     --privileged \
