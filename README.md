@@ -31,11 +31,15 @@ This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in ne
 Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
-```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)```
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)
+```
 
 Then, we'll install `pulseaudio` to handle audio parts with:
 
-```brew install pulseaudio```
+```
+brew install pulseaudio
+```
 
 Then we'll get `pulseaudio` up and running in a way that will work with Docker
 
@@ -76,7 +80,9 @@ From there, you can follow the instructions on the command line to use the syste
 
 That `docker run` command should automatically pull the `local_dougdoug` image from Docker Hub. If it doesn't for some reason you can do that manually by running
 
-```docker pull mcmullarkey/local_dougdoug```
+```
+docker pull mcmullarkey/local_dougdoug
+```
 
 ### Running a different model
 
