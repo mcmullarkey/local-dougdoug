@@ -227,7 +227,8 @@ cd cli
 
 The version depends on Python 3.11.9
 
-Install that version of Python on the command line with ```
+Install that version of Python on the command line with 
+```
 pyenv install 3.11.9
 ```
 
