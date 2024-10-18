@@ -22,20 +22,17 @@ This repo was inspired by:
 - DougDoug's [Babagaboosh](https://github.com/DougDougGithub/Babagaboosh) repo
 - [His video](https://youtu.be/W3id8E34cRQ?si=oRPEyZjjm58Z0lTv) where he created a system of proprietary AIs that completed the children's game Pajama Sam
 
-This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in near real-time for smaller Ollama models `phi3.5` and `qwen2:1.5b`.
+This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in near real-time for smaller Ollama models `phi3.5` and `qwen2.5:1.5b`.
 
 ## Using with Docker (Recommended)
 
 Still to do:
 - Push image to Dockerhub
-- Make sure we can change MODELFILE_BASE_PATH as needed
-- Make sure all create_model.sh files have execute permissions
 - Debug issue with character animation not playing
-- Add section on building Docker image yourself
+
+### On MacOS
 
 Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
-
-On MacOS:
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
@@ -56,13 +53,15 @@ Then run
 
 This command should return an integer (for example: 26)
 
+Sometimes this command will fail if you try to run it right after the above commands. Wait for a bit and try again if it fails.
+
 Then run
 
 `pulseaudio --check`
 
 and if you get no output you're good to go.
 
-To run the Docker image use the following terminal command
+To run the Docker image fire up Docker Desktop and then use the following terminal command
 
 ```
 docker run -it \
@@ -73,6 +72,60 @@ docker run -it \
     --privileged \
     local_dougdoug fortune_teller
 ```
+
+It will take a while for the container to get started up since it has to start running the Ollama server from scratch as well as downloading the necessary base LLM models.
+
+From there, you can follow the instructions on the command line to use the system.
+
+### Running a different model
+
+To change which model you're using you'll need to change the `MODELFILE_BASE_PATH` as well as the `sysargv[1]` following `local_dougdoug` in the Docker command like this
+
+```
+docker run -it \
+    -e PULSE_SERVER=host.docker.internal \
+    -e MODELFILE_BASE_PATH="/app/spy_fox" \
+    -v ~/.config/pulse/cookie:/root/.config/pulse/cookie \
+    --device /dev/snd \
+    --privileged \
+    local_dougdoug spy_fox
+```
+
+### Note on Docker resources
+
+You may need to increase the resources for your Docker image to run the models.
+
+You will likely have enough resources allocated for the `fortune_teller/` model, but almost certainly not for the long context `pajama_sam/` or `spy_fox/` models. 
+
+To up the Resources available to Docker containers go to Docker Desktop > Settings (The gear symbol) > Memory Limit to 32 GB (If you have that much available).
+
+If you want to use smaller models or mess with the image, see the next section on building the Docker image yourself.
+
+### Building the Docker image yourself
+
+Clone the repo
+
+`git clone https://github.com/mcmullarkey/local-dougdoug.git`
+
+navigate into the repo on your local machine
+
+`cd local-dougdoug`
+
+and finally navigate into the `cli` directory
+
+`cd cli`
+
+First, make any changes you'd like to the files in the `cli/` directory/
+
+For example, you could decrease the `PARAMETER num_ctx 16000` in the `spy_fox/Modelfile` to `PARAMETER num_ctx 4096` to make a smaller memory footprint.
+
+(You don't have to make any changes, but if you're not going to you might as well pull the image from Dockerhub as advised in the section above)
+
+Then build the docker image from the Dockerfile in the `cli/` directory.
+
+`docker build -t local_dougdoug .`
+
+After that you can follow the same process for running the Docker image as in the above section.
 
 ## Important note
 
@@ -89,9 +142,9 @@ Note: Not recommended unless for educational purposes! Breaking changes may occu
 
 If you'd still like to follow this walkthrough at a point where the walkthrough will work, you can clone this repo and revert to commit c128187.
 
-## Current setup
+## Setup note
 
-Note: This setup has only been tested directly on an Intel-chip MacOS.
+This setup has only been tested directly on an Intel-chip MacOS.
 
 ### Necessary installations
 
@@ -129,7 +182,7 @@ and finally navigate into the `cli` directory
 
 ### Setting up the Python environment with `pyenv`
 
-The current version depends on Python 3.11.9
+The version depends on Python 3.11.9
 
 Install that version of Python on the command line with `pyenv install 3.11.9`
 
