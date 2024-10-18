@@ -50,7 +50,9 @@ pulseaudio --start --exit-idle-time=-1 --log-target=newfile:/tmp/pulse.log
 
 Then run
 
-```pactl load-module module-native-protocol-tcp auth-anonymous=1```
+```
+pactl load-module module-native-protocol-tcp auth-anonymous=1
+```
 
 This command should return an integer (for example: 26)
 
@@ -58,7 +60,9 @@ Sometimes this command will fail if you try to run it right after the above comm
 
 Then run
 
-```pulseaudio --check```
+```
+pulseaudio --check
+```
 
 and if you get no output you're good to go.
 
@@ -122,15 +126,21 @@ Here's one [resource](https://medium.com/@mreichelt/how-to-show-x11-windows-with
 
 Clone the repo
 
-```git clone https://github.com/mcmullarkey/local-dougdoug.git```
+```
+git clone https://github.com/mcmullarkey/local-dougdoug.git
+```
 
 navigate into the repo on your local machine
 
-```cd local-dougdoug```
+```
+cd local-dougdoug
+```
 
 and finally navigate into the `cli/` directory
 
-```cd cli```
+```
+cd cli
+```
 
 First, make any changes you'd like to the files in the `cli/` directory/
 
@@ -142,7 +152,9 @@ If you're having any issues with changes you've made check out the Troubleshooti
 
 Then build the docker image from the Dockerfile in the `cli/` directory.
 
-```docker build -t mcmullarkey/local_dougdoug .```
+```
+docker build -t mcmullarkey/local_dougdoug .
+```
 
 After that you can follow the same process for running the Docker image as in the above section.
 
@@ -168,12 +180,18 @@ This setup has only been tested directly on an Intel-chip MacOS.
 ### Necessary installations
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
-```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"```
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)
+```
 
 We'll then use `homebrew` to install the other necessary items using these commands in the terminal:
 
-```brew update```
-```brew install pyenv ollama sox```
+```
+brew update
+```
+```
+brew install pyenv ollama sox
+```
 
 `pyenv` allows us to use specific versions of Python as well as create virtual environments. We'll need both of those things for this project!
 
@@ -189,21 +207,29 @@ You'll also need to set up git if you haven't already. I like this resource.
 
 Then, you can clone the repo
 
-```git clone https://github.com/mcmullarkey/local-dougdoug.git```
+```
+git clone https://github.com/mcmullarkey/local-dougdoug.git
+```
 
 navigate into the repo on your local machine
 
-```cd local-dougdoug```
+```
+cd local-dougdoug
+```
 
-and finally navigate into the `cli` directory
+and finally navigate into the `cli/` directory
 
-```cd cli```
+```
+cd cli
+```
 
 ### Setting up the Python environment with `pyenv`
 
 The version depends on Python 3.11.9
 
-Install that version of Python on the command line with ```pyenv install 3.11.9```
+Install that version of Python on the command line with ```
+pyenv install 3.11.9
+```
 
 After that install is complete, you need to install a virtual environment named local-dougdoug
 
