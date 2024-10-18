@@ -31,11 +31,11 @@ This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in ne
 Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)`
+```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)```
 
 Then, we'll install `pulseaudio` to handle audio parts with:
 
-`brew install pulseaudio`
+```brew install pulseaudio```
 
 Then we'll get `pulseaudio` up and running in a way that will work with Docker
 
@@ -46,7 +46,7 @@ pulseaudio --start --exit-idle-time=-1 --log-target=newfile:/tmp/pulse.log
 
 Then run
 
-`pactl load-module module-native-protocol-tcp auth-anonymous=1`
+```pactl load-module module-native-protocol-tcp auth-anonymous=1```
 
 This command should return an integer (for example: 26)
 
@@ -54,7 +54,7 @@ Sometimes this command will fail if you try to run it right after the above comm
 
 Then run
 
-`pulseaudio --check`
+```pulseaudio --check```
 
 and if you get no output you're good to go.
 
@@ -76,7 +76,7 @@ From there, you can follow the instructions on the command line to use the syste
 
 That `docker run` command should automatically pull the `local_dougdoug` image from Docker Hub. If it doesn't for some reason you can do that manually by running
 
-`docker pull mcmullarkey/local_dougdoug`
+```docker pull mcmullarkey/local_dougdoug```
 
 ### Running a different model
 
@@ -116,15 +116,15 @@ Here's one [resource](https://medium.com/@mreichelt/how-to-show-x11-windows-with
 
 Clone the repo
 
-`git clone https://github.com/mcmullarkey/local-dougdoug.git`
+```git clone https://github.com/mcmullarkey/local-dougdoug.git```
 
 navigate into the repo on your local machine
 
-`cd local-dougdoug`
+```cd local-dougdoug```
 
 and finally navigate into the `cli/` directory
 
-`cd cli`
+```cd cli```
 
 First, make any changes you'd like to the files in the `cli/` directory/
 
@@ -136,7 +136,7 @@ If you're having any issues with changes you've made check out the Troubleshooti
 
 Then build the docker image from the Dockerfile in the `cli/` directory.
 
-`docker build -t mcmullarkey/local_dougdoug .`
+```docker build -t mcmullarkey/local_dougdoug .```
 
 After that you can follow the same process for running the Docker image as in the above section.
 
@@ -162,12 +162,12 @@ This setup has only been tested directly on an Intel-chip MacOS.
 ### Necessary installations
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"```
 
 We'll then use `homebrew` to install the other necessary items using these commands in the terminal:
 
-`brew update`
-`brew install pyenv ollama sox`
+```brew update```
+```brew install pyenv ollama sox```
 
 `pyenv` allows us to use specific versions of Python as well as create virtual environments. We'll need both of those things for this project!
 
@@ -183,57 +183,57 @@ You'll also need to set up git if you haven't already. I like this resource.
 
 Then, you can clone the repo
 
-`git clone https://github.com/mcmullarkey/local-dougdoug.git`
+```git clone https://github.com/mcmullarkey/local-dougdoug.git```
 
 navigate into the repo on your local machine
 
-`cd local-dougdoug`
+```cd local-dougdoug```
 
 and finally navigate into the `cli` directory
 
-`cd cli`
+```cd cli```
 
 ### Setting up the Python environment with `pyenv`
 
 The version depends on Python 3.11.9
 
-Install that version of Python on the command line with `pyenv install 3.11.9`
+Install that version of Python on the command line with ```pyenv install 3.11.9```
 
 After that install is complete, you need to install a virtual environment named local-dougdoug
 
-On the command line, run `pyenv virtualenv 3.11.9 local-dougdoug` to create the virtual environment
+On the command line, run ```pyenv virtualenv 3.11.9 local-dougdoug``` to create the virtual environment
 
-Finally, activate the local-dougdoug virtual environment by running `pyenv activate local-dougdoug` on the command line.
+Finally, activate the local-dougdoug virtual environment by running ```pyenv activate local-dougdoug``` on the command line.
 
 ### Installing Python dependencies
 
-Once the local-dougdoug pyenv virtual environment is activated and you've navigated to the `cli` directory, go to the command line and run `pip install -r requirements.txt`
+Once the local-dougdoug pyenv virtual environment is activated and you've navigated to the `cli/` directory, go to the command line and run ```pip install -r requirements.txt```
 
 This will install all the necessary Python dependencies to run the system.
 
 ### Installing the Whisper model for speech-to-text
 
-From the `cli` directory, navigate into the `models` directory
+From the `cli/` directory, navigate into the `models/` directory
 
-`cd models`
+```cd models```
 
 and install the base.en Whisper model with the following command
 
-`./download-ggml-model.sh base.en`
+```./download-ggml-model.sh base.en```
 
-Then navigate back to the `cli` directory
+Then navigate back to the `cli/` directory
 
-`cd ..`
+```cd ..```
 
 ### Creating the custom Ollama character models
 
-Navigate into the `fortune_teller` directory inside the `cli` directory
+Navigate into the `fortune_teller/` directory inside the `cli/` directory
 
-`cd fortune_teller`
+```cd fortune_teller```
 
 You can create the custom Ollama model by running
 
-`./create_model.sh`
+```./create_model.sh```
 
 Note: If this is the first time you're trying to use the base model (in this case qwen2:1.5b) from Ollama this command will pull the model from Ollama and install it on your local machine.
 
@@ -243,15 +243,15 @@ This command uses the `Modelfile` file to create a custom version of the qwen2:1
 
 You can follow this same process for creating the pajama_sam and spy_fox subdirectories.
 
-For now, navigate back to the `cli` directory by running
+For now, navigate back to the `cli/` directory by running
 
-`cd ..`
+```cd ..```
 
 ## Running the system
 
-Once you're in the `cli` directory, run
+Once you're in the `cli/` directory, run
 
-`sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller`
+```sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller```
 
 If everything with the setup has gone well you should be able to start talking at the fortune_teller model! Running this will also automatically download the piper-tts voice model into the same directory where you run this process. This will work for either generic piper-tts voices or custom voice clones in [this HuggingFace repo](https://huggingface.co/mcmullarkey/local-dougdoug-voices).
 
@@ -293,9 +293,11 @@ Note if you're using Docker: You'll need to install piper-tts into a python virt
 
 (Not relevant for Docker, won't help) Another potential fix is either installing or reinstalling `sox` via homebrew.
 
-`brew update`
-`brew install sox`
-`brew upgrade sox`
+```
+brew update
+brew install sox
+brew upgrade sox
+```
 
 If you're still stuck I recommend checking the [piper-tts](https://github.com/rhasspy/piper/issues) repo and seeing if any open or closed Github issues answer your questions
 
