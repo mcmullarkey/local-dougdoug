@@ -26,10 +26,6 @@ This repo's AI system can all run locally on a 2019 Intel Chip Macbook Pro in ne
 
 ## Using with Docker (Recommended)
 
-Still to do:
-- Push image to Dockerhub
-- Debug issue with character animation not playing
-
 ### On MacOS
 
 Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
@@ -71,12 +67,16 @@ docker run -it \
     -v ~/.config/pulse/cookie:/root/.config/pulse/cookie \
     --device /dev/snd \
     --privileged \
-    local_dougdoug fortune_teller
+    mcmullarkey/local_dougdoug fortune_teller
 ```
 
 It will take a while for the container to get started up since it has to start running the Ollama server from scratch and download the necessary base LLM models.
 
 From there, you can follow the instructions on the command line to use the system.
+
+That `docker run` command should automatically pull the `local_dougdoug` image from Docker Hub. If it doesn't for some reason you can do that manually by running
+
+`docker pull mcmullarkey/local_dougdoug`
 
 ### Running a different model
 
@@ -89,7 +89,7 @@ docker run -it \
     -v ~/.config/pulse/cookie:/root/.config/pulse/cookie \
     --device /dev/snd \
     --privileged \
-    local_dougdoug spy_fox
+    mcmullarkey/local_dougdoug spy_fox
 ```
 
 ### Note on Docker resources
@@ -102,7 +102,7 @@ To up the Resources available to Docker containers go to Docker Desktop > Settin
 
 If you want to use smaller models or mess with the image, see the next section on building the Docker image yourself.
 
-### Running with onscreen character animation
+### Running with onscreen character animation (WORK IN PROGRESS)
 
 The versions above won't display a character image because getting a window to display on your local computer via Docker is an entire can of worms.
 
@@ -136,7 +136,7 @@ If you're having any issues with changes you've made check out the Troubleshooti
 
 Then build the docker image from the Dockerfile in the `cli/` directory.
 
-`docker build -t local_dougdoug .`
+`docker build -t mcmullarkey/local_dougdoug .`
 
 After that you can follow the same process for running the Docker image as in the above section.
 
