@@ -197,7 +197,7 @@ brew install pyenv ollama sox
 
 Before moving forward you'll need to "put `pyenv` on your PATH" so if you're not faimilar with that I recommend [this resource](https://realpython.com/intro-to-pyenv/).
 
-### Clonging this repo
+### Cloning this repo
 
 Go to the command line and navigate to where you'd like this repo to live on your local machine. 
 
