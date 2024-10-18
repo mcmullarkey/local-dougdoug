@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     pulseaudio \
     pulseaudio-utils \
     libsdl2-dev \
+    mesa-utils \ 
+    libgl1-mesa-glx \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Install Ollama for Linux
@@ -46,6 +48,10 @@ RUN chmod +x /app/stream
 RUN chmod +x /app/fortune_teller/Modelfile
 RUN chmod +x /app/spy_fox/Modelfile
 RUN chmod +x /app/pajama_sam/Modelfile
+
+# Set the DISPLAY environment variable for X11 forwarding
+# This will be for macOS with XQuartz
+ENV DISPLAY=host.docker.internal:0 
 
 # Expose necessary ports if any services need to be accessed externally
 EXPOSE 11434
