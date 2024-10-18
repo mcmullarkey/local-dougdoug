@@ -1,4 +1,4 @@
-# A local AI setup for talking to characters
+# Am setup for prompting local LLMs via speech-to-text and getting responses via text-to-speech
 
 # A video example
 
@@ -35,7 +35,7 @@ Still to do:
 Because this uses text-to-speech we need to set up our local machine to interface with the Docker image.
 
 We'll use `homebrew` as the primary installer. If you haven't already installed `homebrew` open the terminal and run
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)`
 
 Then, we'll install `pulseaudio` to handle audio parts with:
 
@@ -47,6 +47,7 @@ Then we'll get `pulseaudio` up and running in a way that will work with Docker
 killall pulseaudio
 pulseaudio --start --exit-idle-time=-1 --log-target=newfile:/tmp/pulse.log
 ```
+
 Then run
 
 `pactl load-module module-native-protocol-tcp auth-anonymous=1`
@@ -73,7 +74,7 @@ docker run -it \
     local_dougdoug fortune_teller
 ```
 
-It will take a while for the container to get started up since it has to start running the Ollama server from scratch as well as downloading the necessary base LLM models.
+It will take a while for the container to get started up since it has to start running the Ollama server from scratch and download the necessary base LLM models.
 
 From there, you can follow the instructions on the command line to use the system.
 
@@ -101,6 +102,16 @@ To up the Resources available to Docker containers go to Docker Desktop > Settin
 
 If you want to use smaller models or mess with the image, see the next section on building the Docker image yourself.
 
+### Running with onscreen character animation
+
+The versions above won't display a character image because getting a window to display on your local computer via Docker is an entire can of worms.
+
+If you'd like to add the character animation, follow these steps:
+
+(WORK IN PROGRESS, NOT CURRENTLY WORKING)
+
+Here's one [resource](https://medium.com/@mreichelt/how-to-show-x11-windows-within-docker-on-mac-50759f4b65cb)
+
 ### Building the Docker image yourself
 
 Clone the repo
@@ -111,7 +122,7 @@ navigate into the repo on your local machine
 
 `cd local-dougdoug`
 
-and finally navigate into the `cli` directory
+and finally navigate into the `cli/` directory
 
 `cd cli`
 
@@ -120,6 +131,8 @@ First, make any changes you'd like to the files in the `cli/` directory/
 For example, you could decrease the `PARAMETER num_ctx 16000` in the `spy_fox/Modelfile` to `PARAMETER num_ctx 4096` to make a smaller memory footprint.
 
 (You don't have to make any changes, but if you're not going to you might as well pull the image from Dockerhub as advised in the section above)
+
+If you're having any issues with changes you've made check out the Troubleshooting section later in this README.
 
 Then build the docker image from the Dockerfile in the `cli/` directory.
 
@@ -276,7 +289,9 @@ replacing en_US-lessac-medium with whatever voice you're trying to use if you're
 
 Running this command will help confirm whether the voice file is downloaded and is working for text-to-speech.
 
-One potential fix is either installing or reinstalling `sox` via homebrew.
+Note if you're using Docker: You'll need to install piper-tts into a python virtual environment locally + activate the environment to run this test. Otherwise this failing just indicates you don't have piper-tts installed locally.
+
+(Not relevant for Docker, won't help) Another potential fix is either installing or reinstalling `sox` via homebrew.
 
 `brew update`
 `brew install sox`
