@@ -234,13 +234,25 @@ pyenv install 3.11.9
 
 After that install is complete, you need to install a virtual environment named local-dougdoug
 
-On the command line, run ```pyenv virtualenv 3.11.9 local-dougdoug``` to create the virtual environment
+On the command line, run 
+```
+pyenv virtualenv 3.11.9 local-dougdoug
+``` 
 
-Finally, activate the local-dougdoug virtual environment by running ```pyenv activate local-dougdoug``` on the command line.
+to create the virtual environment
+
+Finally, activate the local-dougdoug virtual environment by running 
+```
+pyenv activate local-dougdoug
+``` 
+on the command line.
 
 ### Installing Python dependencies
 
-Once the local-dougdoug pyenv virtual environment is activated and you've navigated to the `cli/` directory, go to the command line and run ```pip install -r requirements.txt```
+Once the local-dougdoug pyenv virtual environment is activated and you've navigated to the `cli/` directory, go to the command line and run 
+```
+pip install -r requirements.txt
+```
 
 This will install all the necessary Python dependencies to run the system.
 
@@ -248,25 +260,35 @@ This will install all the necessary Python dependencies to run the system.
 
 From the `cli/` directory, navigate into the `models/` directory
 
-```cd models```
+```
+cd models
+```
 
 and install the base.en Whisper model with the following command
 
-```./download-ggml-model.sh base.en```
+```
+./download-ggml-model.sh base.en
+```
 
 Then navigate back to the `cli/` directory
 
-```cd ..```
+```
+cd ..
+```
 
 ### Creating the custom Ollama character models
 
 Navigate into the `fortune_teller/` directory inside the `cli/` directory
 
-```cd fortune_teller```
+```
+cd fortune_teller
+```
 
 You can create the custom Ollama model by running
 
-```./create_model.sh```
+```
+./create_model.sh
+```
 
 Note: If this is the first time you're trying to use the base model (in this case qwen2:1.5b) from Ollama this command will pull the model from Ollama and install it on your local machine.
 
@@ -278,13 +300,17 @@ You can follow this same process for creating the pajama_sam and spy_fox subdire
 
 For now, navigate back to the `cli/` directory by running
 
-```cd ..```
+```
+cd ..
+```
 
 ## Running the system
 
 Once you're in the `cli/` directory, run
 
-```sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller```
+```
+sudo ~/.pyenv/versions/local-dougdoug/bin/python run_local_dougdoug.py fortune_teller
+```
 
 If everything with the setup has gone well you should be able to start talking at the fortune_teller model! Running this will also automatically download the piper-tts voice model into the same directory where you run this process. This will work for either generic piper-tts voices or custom voice clones in [this HuggingFace repo](https://huggingface.co/mcmullarkey/local-dougdoug-voices).
 
