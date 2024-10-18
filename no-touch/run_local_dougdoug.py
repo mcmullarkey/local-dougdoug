@@ -45,7 +45,7 @@ def main():
         
         give_opening_response(character_image, voice)
         
-        time.sleep(5)
+        time.sleep(1)
         
         prompt_text = get_speech_prompt(activation, deactivation)
 
@@ -169,7 +169,47 @@ def give_opening_response(character_image, voice):
                             """,
                             """You sit before Enigma, a power you cannot comprehend. 
                             Tell me what you want to know now.
-                            """
+                            """,
+                             """In shadows, I linger—Enigma, the whisperer of secrets. Speak your truth, but do so wisely.
+    """,
+    """You stand at the crossroads with Enigma, the keeper of fate. What knowledge do you seek?
+    """,
+    """I am Enigma, a fleeting thought from the abyss. Dare to ask, but choose your words carefully.
+    """,
+    """Enigma rises from the depths of despair. Your question awaits, but time is of the essence.
+    """,
+    """I am Enigma, the scribe of unsung destinies. What tales shall we uncover together?
+    """,
+    """Enigma, the observer of the lost, beckons you. Speak your desire before I fade into the void.
+    """,
+    """You have awoken Enigma, the oracle of shadows. Reveal your inquiry, but tread lightly.
+    """,
+    """I am Enigma, the architect of nightmares and dreams. What shall we construct from your query?
+    """,
+    """In the echo of silence, I am Enigma, the phantom of questions unasked. What troubles your mind?
+    """,
+    """I am Enigma, the traveler of forgotten paths. Ask your question before I turn to dust.
+    """,
+    """From the edge of reality, I am Enigma, the keeper of twilight. Speak swiftly, for I am fleeting.
+    """,
+    """You call upon Enigma, the shaper of destinies. What wisdom do you crave, my seeker?
+    """,
+    """I am Enigma, the shadow that follows your thoughts. Speak now, for the hour grows late.
+    """,
+    """Enigma dances on the brink of existence. What truth do you wish to unveil?
+    """,
+    """I am Enigma, a voice from the shadows. Your question whispers in the dark—ask it now.
+    """,
+    """You stand in the presence of Enigma, the ghost of questions past. What echoes do you wish to hear?
+    """,
+    """I am Enigma, the keeper of fragmented dreams. What tale shall we weave together?
+    """,
+    """With a heart of mystery, I am Enigma. Your inquiry awaits, but make haste.
+    """,
+    """In the realm of the unknown, I am Enigma, your guide. Ask, if you dare to know.
+    """,
+    """I am Enigma, the bridge between your reality and the unseen. What do you seek, oh curious soul?
+    """
                         ]
                         
     respond_with_tts({"message": {"content": random.choice(opening_responses)}}, character_image, voice)
@@ -187,9 +227,9 @@ def get_speech_prompt(activation, deactivation):
     def listen_for_prompt(proc):
         while True:
             prompt_text = parse_speech("detected_speech/", similarity_threshold=50)
-            if any(phrase in prompt_text for phrase in ["[silence]", "[blank_audio]", 
-                                                        "(muffled speaking)", "[Music]",
-                                                        "[inaudible]"]):
+            if any(phrase in prompt_text for phrase in ["[silence]", "[ silence ]", "[blank_audio]", 
+                                                        "(muffled speaking)", "[music]", "[sighs]",
+                                                        "[inaudible]", "[pause]", "[ pause ]"]):
                 print("Likely end of speaking detected. Terminating speech detection.")
                 proc.terminate()
                 proc.wait()
@@ -202,7 +242,7 @@ def get_speech_prompt(activation, deactivation):
                 return  # Exit to listen for activation
 
             # Optional: Add a sleep or a small delay to prevent constant CPU usage
-            time.sleep(1)
+            time.sleep(0.5)
 
     listener_thread = threading.Thread(target=listen_for_prompt, args=(process,))
     listener_thread.start()
