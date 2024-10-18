@@ -1,4 +1,4 @@
-# Am setup for prompting local LLMs via speech-to-text and getting responses via text-to-speech
+# A Dockerized setup for prompting local LLMs via speech-to-text and getting responses via text-to-speech
 
 # A video example
 
